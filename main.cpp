@@ -1,8 +1,10 @@
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <set>
 #include <vector>
 //
 #include <gpp.hpp>
@@ -19,6 +21,12 @@ constexpr auto kursawe(const array<real, 3>& x) {
           pow(abs(x[2]), real{0.8}) + 5 * sin(x[2] * x[2] * x[2])};
 }
 
+constexpr auto domination(const array<real, 2>& x, const array<real, 2>& y) {
+  return (x[0] <= y[0]) && (x[1] <= y[1]) && ((x[0] < y[0]) || (x[1] < y[1]));
+  // return ((x[0] < y[0]) && (x[1] <= y[1])) || ((x[0] <= y[0]) && (x[1] <
+  // y[1]));
+}
+
 int main() {
   gpp::pipe plot{};
   fstream file{"tmp.dat", ios::out};
@@ -26,41 +34,63 @@ int main() {
   vector<array<real, 3>> inputs{};
   vector<array<real, 2>> values{};
 
-  const size_t n = 100;
-  for (size_t i = 0; i < n; ++i) {
-    const float x = 10 * real(i) / (n - 1) - 5;
-    for (size_t j = 0; j < n; ++j) {
-      const float y = 10 * real(j) / (n - 1) - 5;
-      for (size_t k = 0; k < n; ++k) {
-        const float z = 10 * real(k) / (n - 1) - 5;
-        const auto v = kursawe({x, y, z});
-        inputs.push_back({x, y, z});
-        values.push_back(v);
+  {
+    const auto start = chrono::high_resolution_clock::now();
+
+    const size_t n = 300;
+    for (size_t i = 0; i < n; ++i) {
+      const float x = 10 * real(i) / (n - 1) - 5;
+      for (size_t j = 0; j < n; ++j) {
+        const float y = 10 * real(j) / (n - 1) - 5;
+        for (size_t k = 0; k < n; ++k) {
+          const float z = 10 * real(k) / (n - 1) - 5;
+          const auto v = kursawe({x, y, z});
+          inputs.push_back({x, y, z});
+          values.push_back(v);
+        }
       }
     }
+
+    const auto end = chrono::high_resolution_clock::now();
+    const auto time = chrono::duration<float>(end - start).count();
+    cout << "generation " << time << " s\n";
   }
 
-  // vector<array<real, 3>> pareto_inputs{};
-  // vector<array<real, 2>> pareto_values{};
+  {
+    const auto start = chrono::high_resolution_clock::now();
 
-  for (size_t i = 0; i < values.size(); ++i) {
-    const auto& p = values[i];
-    bool pareto_dominated = false;
-    for (size_t j = 0; j < values.size(); ++j) {
-      const auto& q = values[j];
-      if ((pareto_dominated = ((q[0] <= p[0]) && (q[1] <= p[1]) &&
-                               ((q[0] < p[0]) || (q[1] < p[1])))))
-        break;
+    vector<size_t> buffer{};
+    set<size_t> pareto_indices{0};
+
+    for (size_t i = 1; i < values.size(); ++i) {
+      const auto& v = values[i];
+      bool to_add = true;
+      buffer.resize(0);
+      for (auto index : pareto_indices) {
+        const auto& p = values[index];
+        if (domination(p, v)) {
+          to_add = false;
+          break;
+        }
+        if (domination(v, p)) buffer.push_back(index);
+      }
+      for (auto index : buffer) pareto_indices.erase(index);
+      if (to_add) pareto_indices.insert(i);
     }
-    if (!pareto_dominated) {
-      // pareto_values.push_back(p);
-      // pareto_inputs.push_back(inputs[i]);
-      const auto& x = inputs[i];
+
+    for (auto index : pareto_indices) {
+      const auto& p = values[index];
+      const auto& x = inputs[index];
       file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0] << '\t'
            << p[1] << '\n';
     }
+
+    file << flush;
+
+    const auto end = chrono::high_resolution_clock::now();
+    const auto time = chrono::duration<float>(end - start).count();
+    cout << "pareto " << time << " s\n";
   }
-  file << flush;
 
   plot << "plot 'tmp.dat' u 4:5 w p\n";
 }
