@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <random>
 #include <set>
 #include <vector>
 //
@@ -28,39 +29,50 @@ constexpr auto domination(const array<real, 2>& x, const array<real, 2>& y) {
 }
 
 int main() {
-  gpp::pipe plot{};
-  fstream file{"tmp.dat", ios::out};
+  mt19937 rng{random_device{}()};
+  uniform_real_distribution<real> dist{-5, 5};
+  const auto random = [&] { return dist(rng); };
 
-  vector<array<real, 3>> inputs{};
-  vector<array<real, 2>> values{};
-
-  {
-    const auto start = chrono::high_resolution_clock::now();
-
-    const size_t n = 300;
-    for (size_t i = 0; i < n; ++i) {
-      const float x = 10 * real(i) / (n - 1) - 5;
-      for (size_t j = 0; j < n; ++j) {
-        const float y = 10 * real(j) / (n - 1) - 5;
-        for (size_t k = 0; k < n; ++k) {
-          const float z = 10 * real(k) / (n - 1) - 5;
-          const auto v = kursawe({x, y, z});
-          inputs.push_back({x, y, z});
-          values.push_back(v);
-        }
-      }
-    }
-
-    const auto end = chrono::high_resolution_clock::now();
-    const auto time = chrono::duration<float>(end - start).count();
-    cout << "generation " << time << " s\n";
+  const int n = 10000;
+  vector<array<real, 3>> inputs(n);
+  vector<array<real, 2>> values(n);
+  for (size_t i = 0; i < n; ++i) {
+    const array<real, 3> x{random(), random(), random()};
+    const auto v = kursawe(x);
+    inputs[i] = x;
+    values[i] = v;
   }
 
+  // vector<array<real, 3>> inputs{};
+  // vector<array<real, 2>> values{};
+
+  // {
+  //   const auto start = chrono::high_resolution_clock::now();
+
+  //   const size_t n = 300;
+  //   for (size_t i = 0; i < n; ++i) {
+  //     const float x = 10 * real(i) / (n - 1) - 5;
+  //     for (size_t j = 0; j < n; ++j) {
+  //       const float y = 10 * real(j) / (n - 1) - 5;
+  //       for (size_t k = 0; k < n; ++k) {
+  //         const float z = 10 * real(k) / (n - 1) - 5;
+  //         const auto v = kursawe({x, y, z});
+  //         inputs.push_back({x, y, z});
+  //         values.push_back(v);
+  //       }
+  //     }
+  //   }
+
+  //   const auto end = chrono::high_resolution_clock::now();
+  //   const auto time = chrono::duration<float>(end - start).count();
+  //   cout << "generation " << time << " s\n";
+  // }
+
+  vector<size_t> buffer{};
+  set<size_t> pareto_indices{0};
+
   {
     const auto start = chrono::high_resolution_clock::now();
-
-    vector<size_t> buffer{};
-    set<size_t> pareto_indices{0};
 
     for (size_t i = 1; i < values.size(); ++i) {
       const auto& v = values[i];
@@ -78,19 +90,31 @@ int main() {
       if (to_add) pareto_indices.insert(i);
     }
 
-    for (auto index : pareto_indices) {
-      const auto& p = values[index];
-      const auto& x = inputs[index];
-      file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0] << '\t'
-           << p[1] << '\n';
-    }
-
-    file << flush;
-
     const auto end = chrono::high_resolution_clock::now();
     const auto time = chrono::duration<float>(end - start).count();
     cout << "pareto " << time << " s\n";
   }
 
-  plot << "plot 'tmp.dat' u 4:5 w p\n";
+  fstream population_file{"population.dat", ios::out};
+  fstream pareto_file{"pareto.dat", ios::out};
+
+  for (size_t i = 0; i < n; ++i) {
+    const auto& p = values[i];
+    const auto& x = inputs[i];
+    population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
+                    << '\t' << p[1] << '\n';
+  }
+  population_file << flush;
+  for (auto index : pareto_indices) {
+    const auto& p = values[index];
+    const auto& x = inputs[index];
+    pareto_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0] << '\t'
+                << p[1] << '\n';
+  }
+  pareto_file << flush;
+
+  gpp::pipe plot{};
+  plot << "plot 'population.dat' u 4:5 w p lt rgb'#999999', 'pareto.dat' u 4:5 "
+          "w p lt rgb '#ff3333'"
+          "pt 13\n";
 }
