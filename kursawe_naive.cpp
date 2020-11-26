@@ -5,10 +5,9 @@
 #include <random>
 #include <set>
 //
+#include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
 #include <lyrahgames/kursawe.hpp>
-// #include <lyrahgames/nsga2.hpp>
-#include <lyrahgames/chrono.hpp>
 #include <lyrahgames/pareto_optimization.hpp>
 
 using namespace std;
