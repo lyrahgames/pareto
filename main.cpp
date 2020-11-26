@@ -79,18 +79,33 @@ int main() {
     fronts[i] = buffer;
   }
 
-  vector<array<real, 3>> tmp_inputs(n);
-  vector<array<real, 2>> tmp_values(n);
-  i = 0;
+  vector<real> crowding_distances(n, 0);
   for (auto& front : fronts) {
-    for (auto index : front) {
-      tmp_inputs[i] = inputs[index];
-      tmp_values[i] = values[index];
-      ++i;
+    if (front.empty()) break;
+    for (size_t v = 0; v < 2; ++v) {
+      sort(begin(front), end(front),
+           [&](auto x, auto y) { return values[x][v] < values[y][v]; });
+      crowding_distances[front.front()] = INFINITY;
+      crowding_distances[front.back()] = INFINITY;
+      for (size_t i = 1; i < front.size() - 1; ++i)
+        crowding_distances[front[i]] +=
+            (values[front[i + 1]][v] - values[front[i - 1]][v]) /
+            (values[front.back()][v] - values[front.front()][v]);
     }
   }
-  swap(inputs, tmp_inputs);
-  swap(values, tmp_values);
+
+  // vector<array<real, 3>> tmp_inputs(n);
+  // vector<array<real, 2>> tmp_values(n);
+  // i = 0;
+  // for (auto& front : fronts) {
+  //   for (auto index : front) {
+  //     tmp_inputs[i] = inputs[index];
+  //     tmp_values[i] = values[index];
+  //     ++i;
+  //   }
+  // }
+  // swap(inputs, tmp_inputs);
+  // swap(values, tmp_values);
 
   // vector<array<real, 3>> inputs{};
   // vector<array<real, 2>> values{};
@@ -154,17 +169,19 @@ int main() {
   //                   << '\t' << p[1] << '\n';
   // }
 
-  i = 0;
+  // i = 0;
   for (auto& front : fronts) {
-    sort(begin(values) + i, begin(values) + i + front.size());
-    for (size_t j = i; j < i + front.size(); ++j) {
+    // sort(begin(values) + i, begin(values) + i + front.size());
+    // for (size_t j = i; j < i + front.size(); ++j) {
+    for (auto j : front) {
       const auto& p = values[j];
       const auto& x = inputs[j];
+      const auto& d = crowding_distances[j];
       population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
-                      << '\t' << p[1] << '\n';
+                      << '\t' << p[1] << '\t' << d << '\n';
     }
     population_file << '\n';
-    i += front.size();
+    // i += front.size();
   }
 
   population_file << flush;
@@ -177,8 +194,7 @@ int main() {
   pareto_file << flush;
 
   gpp::pipe plot{};
-  plot << "plot 'population.dat' u 4:5 w lp lt rgb'#999999', "
-          "'pareto.dat' u 4:5 "
-          "w p lt rgb '#ff3333'"
-          "pt 13\n";
+  plot << "plot 'population.dat' u 4:5 w l lt rgb'#999999', "  //
+          "'' u 4:5:6 w yerrorbars lt rgb '#999999', "         //
+          "'pareto.dat' u 4:5 w p lt rgb '#ff3333' pt 13\n";   //
 }
