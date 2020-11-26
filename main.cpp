@@ -34,7 +34,7 @@ int main() {
   uniform_real_distribution<real> dist{-5, 5};
   const auto random = [&] { return dist(rng); };
 
-  const int n = 100;
+  const int n = 5 * 4;
   vector<array<real, 3>> inputs(n);
   vector<array<real, 2>> values(n);
   for (size_t i = 0; i < n; ++i) {
@@ -92,6 +92,39 @@ int main() {
             (values[front[i + 1]][v] - values[front[i - 1]][v]) /
             (values[front.back()][v] - values[front.front()][v]);
     }
+  }
+
+  vector<array<real, 3>> offspring_inputs(n);
+  vector<array<real, 2>> offspring_values(n);
+  // crossover
+  i = 0;
+  uniform_int_distribution<size_t> population_dist{0, n - 1};
+  for (; i < n / 2; i += 2) {
+    auto x = inputs[population_dist(rng)];
+    auto y = inputs[population_dist(rng)];
+    // const auto crossings = uniform_int_distribution<size_t>{1, 3 - 1}(rng);
+    const size_t crossings = 1;  // odd number ensures results are different
+    for (size_t j = 0; j < crossings; ++j) {
+      const auto index = uniform_int_distribution<size_t>{0, 3 - 1}(rng);
+      swap(x[index], y[index]);
+    }
+    auto x_value = kursawe(x);
+    auto y_value = kursawe(y);
+    offspring_inputs[i + 0] = x;
+    offspring_inputs[i + 1] = y;
+    offspring_values[i + 0] = x_value;
+    offspring_values[i + 1] = y_value;
+  }
+  // mutation
+  for (; i < n; ++i) {
+    auto x = inputs[population_dist(rng)];
+    constexpr real stepsize = 0.1 * 5;
+    for (size_t k = 0; k < x.size(); ++k) {
+      const auto step = uniform_real_distribution<real>{-1, 1}(rng);
+      x[k] += step * stepsize;
+    }
+    offspring_inputs[i] = x;
+    offspring_values[i] = kursawe(x);
   }
 
   // vector<array<real, 3>> tmp_inputs(n);
@@ -160,14 +193,8 @@ int main() {
   }
 
   fstream population_file{"population.dat", ios::out};
+  fstream offspring_file{"offspring.dat", ios::out};
   fstream pareto_file{"pareto.dat", ios::out};
-
-  // for (size_t i = 0; i < n; ++i) {
-  //   const auto& p = values[i];
-  //   const auto& x = inputs[i];
-  //   population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
-  //                   << '\t' << p[1] << '\n';
-  // }
 
   // i = 0;
   for (auto& front : fronts) {
@@ -183,8 +210,16 @@ int main() {
     population_file << '\n';
     // i += front.size();
   }
-
   population_file << flush;
+
+  for (size_t i = 0; i < n; ++i) {
+    const auto& p = offspring_values[i];
+    const auto& x = offspring_inputs[i];
+    offspring_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
+                   << '\t' << p[1] << '\n';
+  }
+  offspring_file << flush;
+
   for (auto index : pareto_indices) {
     const auto& p = values[index];
     const auto& x = inputs[index];
@@ -194,7 +229,8 @@ int main() {
   pareto_file << flush;
 
   gpp::pipe plot{};
-  plot << "plot 'population.dat' u 4:5 w l lt rgb'#999999', "  //
-          "'' u 4:5:6 w yerrorbars lt rgb '#999999', "         //
-          "'pareto.dat' u 4:5 w p lt rgb '#ff3333' pt 13\n";   //
+  plot << "plot 'population.dat' u 4:5 w l lt rgb '#999999', "  //
+          "'' u 4:5:6 w yerrorbars lt rgb '#999999', "          //
+          "'offspring.dat' u 4:5 w p lt rgb '#9999ff', "        //
+          "'pareto.dat' u 4:5 w p lt rgb '#ff3333' pt 13\n";    //
 }
