@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -33,7 +34,7 @@ int main() {
   uniform_real_distribution<real> dist{-5, 5};
   const auto random = [&] { return dist(rng); };
 
-  const int n = 10000;
+  const int n = 100;
   vector<array<real, 3>> inputs(n);
   vector<array<real, 2>> values(n);
   for (size_t i = 0; i < n; ++i) {
@@ -42,6 +43,54 @@ int main() {
     inputs[i] = x;
     values[i] = v;
   }
+
+  vector<size_t> ranks(n, 0);
+  vector<size_t> dominations(n, 0);
+  vector<vector<size_t>> dominated_sets(n);
+  vector<vector<size_t>> fronts(1);
+  for (size_t i = 0; i < n; ++i) {
+    const auto& p = values[i];
+    for (size_t j = 0; j < n; ++j) {
+      const auto& q = values[j];
+      if (domination(p, q))
+        dominated_sets[i].push_back(j);
+      else if (domination(q, p))
+        ++dominations[i];
+    }
+    if (dominations[i] == 0) {
+      ranks[i] = 1;
+      fronts[0].push_back(i);
+    }
+  }
+  size_t i = 0;
+  while (!fronts[i].empty()) {
+    vector<size_t> buffer{};
+    for (auto pid : fronts[i]) {
+      for (auto qid : dominated_sets[pid]) {
+        --dominations[qid];
+        if (dominations[qid] == 0) {
+          ranks[qid] = i + 2;
+          buffer.push_back(qid);
+        }
+      }
+    }
+    ++i;
+    fronts.push_back({});
+    fronts[i] = buffer;
+  }
+
+  vector<array<real, 3>> tmp_inputs(n);
+  vector<array<real, 2>> tmp_values(n);
+  i = 0;
+  for (auto& front : fronts) {
+    for (auto index : front) {
+      tmp_inputs[i] = inputs[index];
+      tmp_values[i] = values[index];
+      ++i;
+    }
+  }
+  swap(inputs, tmp_inputs);
+  swap(values, tmp_values);
 
   // vector<array<real, 3>> inputs{};
   // vector<array<real, 2>> values{};
@@ -98,12 +147,26 @@ int main() {
   fstream population_file{"population.dat", ios::out};
   fstream pareto_file{"pareto.dat", ios::out};
 
-  for (size_t i = 0; i < n; ++i) {
-    const auto& p = values[i];
-    const auto& x = inputs[i];
-    population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
-                    << '\t' << p[1] << '\n';
+  // for (size_t i = 0; i < n; ++i) {
+  //   const auto& p = values[i];
+  //   const auto& x = inputs[i];
+  //   population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
+  //                   << '\t' << p[1] << '\n';
+  // }
+
+  i = 0;
+  for (auto& front : fronts) {
+    sort(begin(values) + i, begin(values) + i + front.size());
+    for (size_t j = i; j < i + front.size(); ++j) {
+      const auto& p = values[j];
+      const auto& x = inputs[j];
+      population_file << x[0] << '\t' << x[1] << '\t' << x[2] << '\t' << p[0]
+                      << '\t' << p[1] << '\n';
+    }
+    population_file << '\n';
+    i += front.size();
   }
+
   population_file << flush;
   for (auto index : pareto_indices) {
     const auto& p = values[index];
@@ -114,7 +177,8 @@ int main() {
   pareto_file << flush;
 
   gpp::pipe plot{};
-  plot << "plot 'population.dat' u 4:5 w p lt rgb'#999999', 'pareto.dat' u 4:5 "
+  plot << "plot 'population.dat' u 4:5 w lp lt rgb'#999999', "
+          "'pareto.dat' u 4:5 "
           "w p lt rgb '#ff3333'"
           "pt 13\n";
 }
