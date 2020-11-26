@@ -4,6 +4,7 @@ using cxx
 hxx{*}: extension = hpp
 cxx{*}: extension = cpp
 
-exe{main}: {hxx cxx}{**}
-
 cxx.poptions =+ "-I$src_base"
+
+./: exe{main}: cxx{main} hxx{gpp}
+./: exe{kursawe}: cxx{kursawe} hxx{**}

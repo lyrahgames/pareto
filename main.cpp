@@ -399,9 +399,7 @@ int main() {
 
   nsga2 moo{};
   gpp::pipe plot{};
-  plot << "set xr [-21:-14]\n"
-       << "set yr [-12:2]\n";
-
+  gpp::pipe plot2{};
   while (true) {
     moo.advance();
     moo.non_dominated_sort();
@@ -430,9 +428,15 @@ int main() {
     }
     pareto_file << flush;
 
-    plot << "plot 'population.dat' u 4:5 w l lt rgb '#999999', "  //
+    plot << "set xr [-21:-14]\n"
+         << "set yr [-12:2]\n"
+         << "plot 'population.dat' u 4:5 w l lt rgb '#999999', "  //
             "'' u 4:5:6 w yerrorbars lt rgb '#999999', "          //
             "'pareto.dat' u 4:5 w p lt rgb '#ff3333' pt 13\n";
+    plot2 << "set xr [-5:5]\n"
+          << "set yr [-5:5]\n"
+          << "set zr [-5:5]\n"
+          << "splot 'pareto.dat' u 1:2:3 w lines\n";
     this_thread::sleep_for(50ms);
   }
 }
