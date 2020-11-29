@@ -12,50 +12,56 @@
 #include <lyrahgames/kursawe.hpp>
 #include <lyrahgames/nsga2.hpp>
 // #include <lyrahgames/pareto_optimization.hpp>
+#include <lyrahgames/meta.hpp>
 
 using namespace std;
 using namespace lyrahgames;
 using real = float;
 
 void test(auto x) { cout << "The argument uses the default implementation.\n"; }
-void test(lyrahgames::vector auto x) {
+void test(generic::vector auto x) {
   cout << "The argument fulfills the concept vector.\n";
 }
-void test(lyrahgames::vector_field auto f) {
+void test(generic::callable auto f) {
+  cout << "The argument fulfills the callable concept.\n";
+}
+void test(generic::vector_field auto f) {
   cout << "The argument fulfills the concept vector_field.\n";
 }
-constexpr void callable_test(auto callable) {
-  // cout << typeid(typename detail::function_traits<decltype(
-  //                    std::function{callable})>::result_type)
-  //             .name()
-  //      << '(';
+// constexpr void callable_test(auto callable) {
+//   // cout << typeid(typename detail::function_traits<decltype(
+//   //                    std::function{callable})>::result_type)
+//   //             .name()
+//   //      << '(';
 
-  using traits = decltype(detail::function_traits{callable});
+//   using traits = decltype(detail::function_traits{callable});
 
-  cout << typeid(typename traits::result_type).name() << '(';
-  if constexpr (traits::argc > 0) {
-    // cout << typeid(typename traits::arg<0>).name();
-    std::apply(
-        [](auto&&... args) { ((cout << typeid(args).name() << ", "), ...); },
-        typename traits::args{});
-  }
+//   cout << typeid(typename traits::result_type).name() << '(';
+//   if constexpr (traits::argc > 0) {
+//     // cout << typeid(typename traits::arg<0>).name();
+//     std::apply(
+//         [](auto&&... args) { ((cout << typeid(args).name() << ", "), ...); },
+//         typename traits::args{});
+//   }
 
-  // for (size_t i = 0; i < typename detail::function_traits<decltype(
-  //                            std::function{callable})>::argc;
-  //      ++i)
-  // if constexpr (detail::function_traits<decltype(
-  //                   std::function{callable})>::argc > 0)
-  //   cout << typeid(typename detail::function_traits<decltype(
-  //                      std::function{callable})>::arg<0>)
-  //               .name()
-  //        << ", ";
-  cout << ')' << '\n';
-}
+//   // for (size_t i = 0; i < typename detail::function_traits<decltype(
+//   //                            std::function{callable})>::argc;
+//   //      ++i)
+//   // if constexpr (detail::function_traits<decltype(
+//   //                   std::function{callable})>::argc > 0)
+//   //   cout << typeid(typename detail::function_traits<decltype(
+//   //                      std::function{callable})>::arg<0>)
+//   //               .name()
+//   //        << ", ";
+//   cout << ')' << '\n';
+// }
 
 struct functor {
   int operator()() const { return a; }
   int a;
 };
+
+struct A {};
 
 int main() {
   test(1.0f);
@@ -70,13 +76,13 @@ int main() {
   test([](array<float, 3> x) { return std::vector<float>{}; });
   test(kursawe<float>);
 
-  callable_test([](float x) { return x * x; });
-  callable_test([](float x, double y, int z) { return x * x + y + z; });
-  callable_test(test<float>);
-  functor f{2};
-  callable_test(f);
+  // callable_test([](float x) { return x * x; });
+  // callable_test([](float x, double y, int z) { return x * x + y + z; });
+  // callable_test(test<float>);
+  // functor f{2};
+  // callable_test(f);
 
-  aabb<array<float, 2>> box{{-5, -3}, {1, 2}};
+  // aabb<array<float, 2>> box{{-5, -3}, {1, 2}};
 
   mt19937 rng{random_device{}()};
   uniform_real_distribution<real> dist{-5, 5};
