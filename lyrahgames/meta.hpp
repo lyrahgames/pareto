@@ -7,6 +7,26 @@ namespace lyrahgames {
 namespace generic {
 
 template <typename T>
+concept array =      //
+    std::regular<T>  //
+        &&           //
+    requires(T v, size_t i) {
+  { size(v) }
+  ->std::unsigned_integral;
+  { size(v) }
+  ->std::convertible_to<size_t>;
+  v[i];
+  requires std::is_constructible_v<
+      T, std::initializer_list<std::decay_t<decltype(v[i])>>>;
+};
+
+template <typename T>
+concept static_array = array<T> &&  //
+    std::enable_if_t<(size(T{}) > 0), std::true_type>::value;
+template <typename T>
+concept dynamic_array = array<T> && !static_array<T>;
+
+template <typename T>
 concept callable = requires(T v) {
   std::function{v};
 };
@@ -98,10 +118,10 @@ using argument = typename decltype(function{std::declval<T>()})::argument<N>;
 namespace generic {
 
 template <typename T, typename U>
-concept compatible_vectors =   //
-    generic::vector<T>         //
-        && generic::vector<U>  //
-            && std::same_as<meta::value<T>, meta::value<U>>;
+concept compatible_vectors =  //
+    generic::vector<T>        //
+        &&generic::vector<U>  //
+            &&std::same_as<meta::value<T>, meta::value<U>>;
 
 template <typename T>
 concept vector_field =                 //
