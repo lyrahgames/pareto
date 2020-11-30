@@ -22,6 +22,9 @@ concept vector = requires(T v) {
 
 namespace meta {
 
+template <generic::vector T>
+using value = std::decay_t<decltype(std::declval<T>()[0])>;
+
 namespace detail {
 
 template <typename T>
@@ -94,22 +97,17 @@ using argument = typename decltype(function{std::declval<T>()})::argument<N>;
 
 namespace generic {
 
+template <typename T, typename U>
+concept compatible_vectors =   //
+    generic::vector<T>         //
+        && generic::vector<U>  //
+            && std::same_as<meta::value<T>, meta::value<U>>;
+
 template <typename T>
-concept vector_field = callable<T>                        //
-                       && (meta::argument_count<T> == 1)  //
-                       && vector<meta::result<T>>         //
-                              && vector<meta::argument<T, 0>>;
-// requires(T v) {
-// requires decltype(detail::function_traits{v})::argc == 1;
-// requires vector<typename
-// decltype(detail::function_traits{v})::result_type>; requires
-// vector<typename decltype(detail::function_traits{v})::arg<0>>; requires
-// meta::function<T>::argument_count == 1;
-// requires meta::argument_count<T> == 1;
-// requires vector<meta::result<T>>;
-// requires vector<typename meta::function<T>::argument<0>>;
-// requires vector<meta::argument<T, 0>>;
-// };
+concept vector_field =                 //
+    callable<T>                        //
+    && (meta::argument_count<T> == 1)  //
+    && compatible_vectors<meta::result<T>, meta::argument<T, 0>>;
 
 }  // namespace generic
 
