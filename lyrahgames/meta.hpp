@@ -43,7 +43,9 @@ concept vector = requires(T v) {
 namespace meta {
 
 template <generic::vector T>
-using value = std::decay_t<decltype(std::declval<T>()[0])>;
+using qualified_value = decltype(std::declval<T>()[0]);
+template <generic::vector T>
+using value = std::decay_t<qualified_value<T>>;
 
 namespace detail {
 
@@ -103,15 +105,31 @@ struct function<std::function<R(Args...)>> {
 template <generic::callable T>
 function(T) -> function<decltype(std::function{std::declval<T>()})>;
 
+// We have to introduce a second using declaration.
+// Otherwise, strange compiler error seem to happen.
+// We do not know why this happens.
 template <generic::callable T>
-using result = typename decltype(function{std::declval<T>()})::result;
+using qualified_result = typename decltype(function{std::declval<T>()})::result;
+template <generic::callable T>
+using result = std::decay_t<qualified_result<T>>;
+
 template <generic::callable T>
 constexpr auto argument_count =
     decltype(function{std::declval<T>()})::argument_count;
+
 template <generic::callable T>
 using arguments = typename decltype(function{std::declval<T>()})::arguments;
+
 template <generic::callable T, size_t N>
-using argument = typename decltype(function{std::declval<T>()})::argument<N>;
+using qualified_argument =
+    std::decay_t<typename decltype(function{std::declval<T>()})::argument<N>>;
+template <generic::callable T, size_t N>
+using argument = std::decay_t<qualified_argument<T, N>>;
+
+template <typename T>
+constexpr auto print_type() = delete;
+template <typename T>
+constexpr auto print_type(T) = delete;
 
 }  // namespace meta
 

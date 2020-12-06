@@ -34,14 +34,16 @@ constexpr auto domination(const T& x, const T& y) {
 
 // pareto_front_estimation
 template <generic::vector_field T, typename RNG>
-inline auto monte_carlo_pareto_front(
-    T f, const aabb<std::decay_t<meta::argument<T, 0>>>& box, size_t n,
-    RNG&& rng) {
+inline auto monte_carlo_pareto_front(T f, const aabb<meta::argument<T, 0>>& box,
+                                     size_t n, RNG&& rng) {
   using namespace std;
-  using argument_type = std::decay_t<meta::argument<T, 0>>;
-  using result_type = std::decay_t<meta::result<T>>;
-  // using argument_value_type = meta::value<argument_type>;
-  using argument_value_type = std::decay_t<decltype(box.min[0])>;
+
+  using result_type = meta::result<T>;
+  using argument_type = meta::argument<T, 0>;
+  using argument_value_type = meta::value<argument_type>;
+  // meta::print_type<result_type>();
+  // meta::print_type<argument_type>();
+  // meta::print_type<argument_value_type>();
   //
   uniform_real_distribution<argument_value_type> distribution{0, 1};
   set<result_type> pareto_set{};
