@@ -10,3 +10,4 @@ cxx.poptions =+ "-I$src_base"
 ./: exe{kursawe_nsga2}: cxx{kursawe_nsga2} hxx{**}
 ./: exe{kursawe_naive}: cxx{kursawe_naive} hxx{**}
 ./: exe{viennet_naive}: cxx{viennet_naive} hxx{**}
+./: exe{surface_naive}: cxx{surface_naive} hxx{**}
