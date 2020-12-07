@@ -5,10 +5,13 @@
 #include <tuple>
 #include <vector>
 //
-#include <lyrahgames/pareto_optimization.hpp>
+#include <lyrahgames/meta.hpp>
+#include <lyrahgames/pareto/aabb.hpp>
+#include <lyrahgames/pareto/domination.hpp>
 
-namespace lyrahgames::nsga2 {
+namespace lyrahgames::pareto {
 
+namespace nsga2 {
 // currently only for static arrays
 template <generic::vector_field field, typename RNG>
 auto optimization(field f, const aabb<meta::argument<field, 0>>& box, RNG&& rng,
@@ -172,5 +175,6 @@ auto optimization(field f, const aabb<meta::argument<field, 0>>& box, RNG&& rng,
 
   return tuple{inputs, values, fronts};
 }
+}  // namespace nsga2
 
-}  // namespace lyrahgames::nsga2
+}  // namespace lyrahgames::pareto

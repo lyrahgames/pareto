@@ -6,12 +6,13 @@
 //
 #include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
-#include <lyrahgames/pareto_optimization.hpp>
-#include <lyrahgames/viennet.hpp>
+#include <lyrahgames/pareto/gallery/viennet.hpp>
+#include <lyrahgames/pareto/naive.hpp>
 
 int main() {
   using namespace std;
   using namespace lyrahgames;
+  using namespace pareto;
 
   using real = float;
   using config_vector = array<real, 2>;

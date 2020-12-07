@@ -9,16 +9,17 @@
 //
 #include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
-#include <lyrahgames/kursawe.hpp>
 #include <lyrahgames/meta.hpp>
 #include <lyrahgames/nsga2.hpp>
-#include <lyrahgames/pareto_optimization.hpp>
-#include <lyrahgames/poloni2.hpp>
-#include <lyrahgames/schaffer.hpp>
+#include <lyrahgames/pareto/gallery/kursawe.hpp>
+#include <lyrahgames/pareto/gallery/poloni2.hpp>
+#include <lyrahgames/pareto/gallery/schaffer.hpp>
+#include <lyrahgames/pareto/naive.hpp>
 
 int main() {
   using namespace std;
   using namespace lyrahgames;
+  using namespace pareto;
 
   using real = float;
   using config_vector = array<real, 3>;

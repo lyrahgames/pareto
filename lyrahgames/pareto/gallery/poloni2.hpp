@@ -5,7 +5,7 @@
 //
 #include <lyrahgames/meta.hpp>
 
-namespace lyrahgames {
+namespace lyrahgames::pareto {
 
 template <typename Y, typename X>
 requires generic::compatible_vectors<X, Y>  //
@@ -24,4 +24,4 @@ requires generic::compatible_vectors<X, Y>  //
            square(x[0] + 3) + square(x[1] + 1)};
 }
 
-}  // namespace lyrahgames
+}  // namespace lyrahgames::pareto

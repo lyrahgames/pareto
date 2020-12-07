@@ -6,7 +6,7 @@
 //
 #include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
-#include <lyrahgames/pareto_optimization.hpp>
+#include <lyrahgames/pareto/naive.hpp>
 
 template <std::floating_point Real>
 constexpr auto pawellek(const std::array<Real, 3>& x) {
@@ -25,6 +25,7 @@ constexpr auto pawellek(const std::array<Real, 3>& x) {
 int main() {
   using namespace std;
   using namespace lyrahgames;
+  using namespace pareto;
 
   using real = float;
   using config_vector = array<real, 3>;

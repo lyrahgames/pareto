@@ -7,12 +7,12 @@
 //
 #include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
-#include <lyrahgames/kursawe.hpp>
 #include <lyrahgames/nsga2.hpp>
-#include <lyrahgames/pareto_optimization.hpp>
+#include <lyrahgames/pareto/gallery/kursawe.hpp>
 
 using namespace std;
 using namespace lyrahgames;
+using namespace pareto;
 using real = float;
 
 int main() {

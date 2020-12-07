@@ -4,7 +4,9 @@
 #include <random>
 #include <vector>
 //
-#include <lyrahgames/pareto_optimization.hpp>
+#include <lyrahgames/pareto/aabb.hpp>
+#include <lyrahgames/pareto/domination.hpp>
+#include <lyrahgames/pareto/gallery/kursawe.hpp>
 
 namespace lyrahgames {
 
@@ -42,8 +44,8 @@ inline void nsga2::make_new_population() {
       const auto index = std::uniform_int_distribution<size_t>{0, 3 - 1}(rng);
       std::swap(x[index], y[index]);
     }
-    auto x_value = kursawe(x);
-    auto y_value = kursawe(y);
+    auto x_value = pareto::kursawe(x);
+    auto y_value = pareto::kursawe(y);
     inputs[m + i + 0] = x;
     inputs[m + i + 1] = y;
     values[m + i + 0] = x_value;
@@ -58,7 +60,7 @@ inline void nsga2::make_new_population() {
       x[k] += step * stepsize;
     }
     inputs[m + i] = x;
-    values[m + i] = kursawe(x);
+    values[m + i] = pareto::kursawe(x);
   }
 }
 
@@ -66,7 +68,7 @@ inline void nsga2::initialize() {
   std::uniform_real_distribution<real> dist{-5, 5};
   for (size_t i = 0; i < m; ++i) {
     const std::array<real, 3> x{dist(rng), dist(rng), dist(rng)};
-    const auto v = kursawe(x);
+    const auto v = pareto::kursawe(x);
     inputs[i] = x;
     values[i] = v;
   }
@@ -84,9 +86,9 @@ inline void nsga2::non_dominated_sort() {
     const auto& p = values[i];
     for (size_t j = 0; j < n; ++j) {
       const auto& q = values[j];
-      if (domination(p, q))
+      if (pareto::domination(p, q))
         dominated_sets[i].push_back(j);
-      else if (domination(q, p))
+      else if (pareto::domination(q, p))
         ++dominations[i];
     }
     if (dominations[i] == 0) {

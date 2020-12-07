@@ -7,13 +7,13 @@
 //
 #include <lyrahgames/chrono.hpp>
 #include <lyrahgames/gpp.hpp>
-#include <lyrahgames/kursawe.hpp>
-#include <lyrahgames/nsga2_optimizer.hpp>
-#include <lyrahgames/pareto_optimization.hpp>
-#include <lyrahgames/poloni2.hpp>
+#include <lyrahgames/pareto/gallery/kursawe.hpp>
+#include <lyrahgames/pareto/gallery/poloni2.hpp>
+#include <lyrahgames/pareto/nsga2.hpp>
 
 using namespace std;
 using namespace lyrahgames;
+using namespace pareto;
 using real = float;
 
 int main() {
@@ -31,7 +31,7 @@ int main() {
   const auto box = aabb<array<float, 2>>{{-M_PI, -M_PI}, {M_PI, M_PI}};
 
   const auto t = time([&] {
-    tie(inputs, values, fronts) = nsga2::optimization(f, box, rng, 100);
+    tie(inputs, values, fronts) = pareto::nsga2::optimization(f, box, rng, 100);
   });
   cout << "Computation took " << t << "s for " << fronts.front().size()
        << " points on the pareto front."

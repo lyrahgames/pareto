@@ -1,36 +1,13 @@
 #pragma once
-#include <array>
-#include <cassert>
-#include <iostream>
 #include <random>
 #include <set>
 #include <vector>
 //
 #include <lyrahgames/meta.hpp>
+#include <lyrahgames/pareto/aabb.hpp>
+#include <lyrahgames/pareto/domination.hpp>
 
-namespace lyrahgames {
-
-template <generic::vector T>
-struct aabb {
-  T min;
-  T max;
-};
-
-template <std::totally_ordered Real>
-constexpr auto domination(const std::array<Real, 2>& x,
-                          const std::array<Real, 2>& y) {
-  return (x[0] <= y[0]) && (x[1] <= y[1]) && ((x[0] < y[0]) || (x[1] < y[1]));
-}
-
-template <generic::vector T>
-constexpr auto domination(const T& x, const T& y) {
-  assert(size(x) == size(y));
-  for (size_t i = 0; i < size(x); ++i)
-    if (x[i] > y[i]) return false;
-  for (size_t i = 0; i < size(x); ++i)
-    if (x[i] < y[i]) return true;
-  return false;
-}
+namespace lyrahgames::pareto {
 
 // pareto_front_estimation
 template <generic::vector_field T, typename RNG>
@@ -81,4 +58,4 @@ inline auto monte_carlo_pareto_front(T f, const aabb<meta::argument<T, 0>>& box,
   return result;
 }
 
-}  // namespace lyrahgames
+}  // namespace lyrahgames::pareto

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <concepts>
 
-namespace lyrahgames {
+namespace lyrahgames::pareto {
 
 template <std::floating_point Real>
 constexpr auto kursawe(const std::array<Real, 3>& x) {
@@ -16,4 +16,4 @@ constexpr auto kursawe(const std::array<Real, 3>& x) {
           pow(abs(x[2]), Real{0.8}) + 5 * sin(x[2] * x[2] * x[2])};
 }
 
-}  // namespace lyrahgames
+}  // namespace lyrahgames::pareto

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <concepts>
 
-namespace lyrahgames {
+namespace lyrahgames::pareto {
 
 template <std::floating_point Real>
 constexpr auto viennet(const std::array<Real, 2>& x) {
@@ -17,4 +17,4 @@ constexpr auto viennet(const std::array<Real, 2>& x) {
       Real{1} / (tmp + Real{1}) - Real{1.1} * exp(-tmp)};
 }
 
-}  // namespace lyrahgames
+}  // namespace lyrahgames::pareto
