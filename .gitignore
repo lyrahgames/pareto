@@ -5,6 +5,10 @@
 !*.cpp
 
 !buildfile
+!manifest
+!bootstrap.build
+!root.build
+!export.build
 
 !README.md
 !COPYING

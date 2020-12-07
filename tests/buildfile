@@ -1,0 +1,2 @@
+import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
+./: exe{viennet}: cxx{viennet} $libs

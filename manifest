@@ -1,0 +1,21 @@
+: 1
+name: lyrahgames-pareto
+version: 0.1.0-a.0.z
+project: lyrahgames
+summary: Header-Only C++ Library for the Estimation of N-Dimensional Pareto Frontiers
+license: GPL-3.0-or-later ; GNU General Public License v3.0 or later
+
+topics: pareto optimization, multi-objective optimization
+keywords: NSGA-II
+
+description-file: README.md
+
+url: https://github.com/lyrahgames/pareto
+
+email: lyrahgames@mailbox.org
+build-error-email: lyrahgames@mailbox.org
+
+depends: * build2 >= 0.13.0
+depends: * bpkg >= 0.13.0
+
+requires: c++20
