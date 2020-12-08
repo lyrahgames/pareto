@@ -14,3 +14,5 @@ tests/: install = false
 ./: exe{kursawe_naive}: cxx{kursawe_naive} hxx{**}
 ./: exe{viennet_naive}: cxx{viennet_naive} hxx{**}
 ./: exe{surface_naive}: cxx{surface_naive} hxx{**}
+
+./: exe{constraints}: cxx{constraints} hxx{**}
