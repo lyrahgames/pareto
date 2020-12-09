@@ -16,3 +16,4 @@ tests/: install = false
 ./: exe{surface_naive}: cxx{surface_naive} hxx{**}
 
 ./: exe{constraints}: cxx{constraints} hxx{**}
+./: exe{nsga2_constrained}: cxx{nsga2_constrained} hxx{**}
