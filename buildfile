@@ -17,3 +17,7 @@ tests/: install = false
 
 ./: exe{constraints}: cxx{constraints} hxx{**}
 ./: exe{nsga2_constrained}: cxx{nsga2_constrained} hxx{**}
+
+./: exe{ranges_test}: cxx{ranges_test} hxx{**}
+
+./: exe{interface_test}: cxx{interface_test} hxx{**}

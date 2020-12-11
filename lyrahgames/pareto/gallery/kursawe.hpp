@@ -16,4 +16,14 @@ constexpr auto kursawe(const std::array<Real, 3>& x) {
           pow(abs(x[2]), Real{0.8}) + 5 * sin(x[2] * x[2] * x[2])};
 }
 
+template <std::floating_point real>
+constexpr auto kursawe_compute(real* result, const real* x) {
+  result[0] = -10 * (exp(real(-0.2) * sqrt(x[0] * x[0] + x[1] * x[1])) +
+                     exp(real(-0.2) * sqrt(x[1] * x[1] + x[2] * x[2])));
+
+  result[1] = pow(abs(x[0]), real(0.8)) + 5 * sin(x[0] * x[0] * x[0]) +
+              pow(abs(x[1]), real(0.8)) + 5 * sin(x[1] * x[1] * x[1]) +
+              pow(abs(x[2]), real(0.8)) + 5 * sin(x[2] * x[2] * x[2]);
+}
+
 }  // namespace lyrahgames::pareto
