@@ -9,6 +9,7 @@
 #include <ranges>
 #include <set>
 #include <span>
+#include <tuple>
 #include <type_traits>
 #include <vector>
 //
@@ -89,6 +90,15 @@ constexpr auto domination(const vector& x, const vector& y) {
   return false;
 }
 
+template <std::floating_point real>
+inline auto domination(size_t n, real* x, real* y) {
+  for (size_t i = 0; i < n; ++i)
+    if (x[i] > y[i]) return false;
+  for (size_t i = 0; i < n; ++i)
+    if (x[i] < y[i]) return true;
+  return false;
+}
+
 template <typename pareto_problem, typename RNG>
 inline auto pareto_optimization(pareto_problem problem, size_t n, RNG&& rng) {
   using namespace std;
@@ -139,6 +149,123 @@ inline auto pareto_optimization(pareto_problem problem, size_t n, RNG&& rng) {
   return result;
 }
 
+namespace nsga2 {
+// struct optimizer {
+//   size_t initial_size = 100;
+//   size_t population_size = 2 * initial_size;
+//   std::vector<real> configurations;
+//   std::vector<real> objectives;
+//   std::vector<real> buffer;
+//   std::vector<size_t> permutation;
+
+//   nsga2(){}
+
+//   void create_initial_population(){}
+
+// void populate() {
+//   size_t i = 0;
+//   for (; i < crossover_count; i += 2) {
+//     const auto index1 = random();
+//     const auto index2 = random();
+//     crossover(permutation[index1], permutation[index2],
+//               permutation[initial_size + i],
+//               permutation[initial_size + i + 1]);
+//   }
+//   for (; i < mutation_count; ++i) {
+//     const auto index = random();
+//     mutate(permutation[index], permutatiton[initial_size + i]);
+//   }
+// }
+// void crossover(size_t index1, size_t index2, size_t store1, size_t store2);
+// void mutate(size_t index, size_t store);
+// void non_dominated_sort();
+// void assign_crowding_distances();
+// void advance(size_t iterations) {
+//   for (size_t it = 0; it < iterations; ++it) {
+//     populate();
+//     non_dominated_sort();
+//     assign_crowding_distances();
+//     sort();           // we sort only the permutation array
+//     copy_and_swap();  // copy not needed with permutatiton array
+//   }
+// }
+// };
+
+template <typename pareto_problem, typename RNG,
+          typename real =
+              remove_pointer_t<lyrahgames::meta::argument<pareto_problem, 1>>>
+auto initialize_population(pareto_problem&& problem, RNG&& rng, size_t n,
+                           real* configurations, real* objectives) {
+  using namespace std;
+
+  uniform_real_distribution<real> distribution{0, 1};
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < problem.configurations; ++j) {
+      const auto random = distribution(rng);
+      const auto [a, b] = problem.box(j);
+      configurations[problem.configurations * i + j] =
+          random * a + (1 - random) * b;
+    }
+    problem(&configurations[problem.configurations * i],
+            &objectives[problem.objectives * i]);
+  }
+}
+template <typename pareto_problem, typename RNG>
+auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
+  using namespace std;
+
+  using real = remove_pointer_t<lyrahgames::meta::argument<pareto_problem, 1>>;
+
+  vector<real> configurations(n * problem.configurations);
+  vector<real> objectives(n * problem.objectives);
+
+  initialize_population(problem, rng, n, configurations.data(),
+                        objectives.data());
+
+  vector<vector<size_t>> fronts{};
+  fronts.resize(1);
+  fronts.front().resize(0);
+
+  vector<size_t> ranks(n, 0);
+  vector<size_t> dominations(n, 0);
+  vector<vector<size_t>> dominated_sets(n);
+
+  for (size_t i = 0; i < n; ++i) {
+    auto p = &objectives[problem.objectives * i];
+    for (size_t j = 0; j < n; ++j) {
+      auto q = &objectives[problem.objectives * j];
+      if (domination(problem.objectives, p, q))
+        dominated_sets[i].push_back(j);
+      else if (domination(problem.objectives, q, p))
+        ++dominations[i];
+    }
+    if (dominations[i] == 0) {
+      ranks[i] = 1;
+      fronts[0].push_back(i);
+    }
+  }
+  size_t i = 0;
+  while (!fronts[i].empty()) {
+    vector<size_t> buffer{};
+    for (auto pid : fronts[i]) {
+      for (auto qid : dominated_sets[pid]) {
+        --dominations[qid];
+        if (dominations[qid] == 0) {
+          ranks[qid] = i + 2;
+          buffer.push_back(qid);
+        }
+      }
+    }
+    ++i;
+    fronts.push_back({});
+    fronts[i] = buffer;
+  }
+
+  return tuple{configurations, objectives, fronts};
+}
+
+}  // namespace nsga2
+
 int main() {
   using namespace std;
   using namespace lyrahgames;
@@ -149,10 +276,26 @@ int main() {
 
   // auto pareto_front = pareto_optimization(kursawe<float>, 10'000'000, rng);
   // auto pareto_front = pareto_optimization(poloni2<float>, 100'000, rng);
-  auto pareto_front = pareto_optimization(zdt3<float>, 1'000'000'000, rng);
+  // auto pareto_front = pareto_optimization(zdt3<float>, 10'000'000, rng);
+  // fstream pareto_file{"pareto.dat", ios::out};
+  // for (auto& p : pareto_front) pareto_file << p[0] << '\t' << p[1] << '\n';
+  // pareto_file << flush;
+
+  // gpp plot{};
+  // plot << "plot 'pareto.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
+
+  size_t n = 1000;
+  auto& problem = kursawe<float>;
+  const auto [pareto_configs, pareto_front, fronts] =
+      nsga2::optimization(problem, rng, n);
 
   fstream pareto_file{"pareto.dat", ios::out};
-  for (auto& p : pareto_front) pareto_file << p[0] << '\t' << p[1] << '\n';
+  for (size_t i = 0; i < fronts.front().size(); ++i) {
+    const auto index = problem.objectives * fronts[0][i];
+    cout << fronts[0][i] << '\n';
+    pareto_file << pareto_front[index + 0] << '\t' << pareto_front[index + 1]
+                << '\n';
+  }
   pareto_file << flush;
 
   gpp plot{};
