@@ -1,10 +1,12 @@
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <concepts>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <ranges>
 #include <set>
@@ -222,46 +224,93 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
   initialize_population(problem, rng, n, configurations.data(),
                         objectives.data());
 
-  vector<vector<size_t>> fronts{};
-  fronts.resize(1);
-  fronts.front().resize(0);
+  vector<size_t> permutation(n);
+  iota(begin(permutation), end(permutation), 0);
+  vector<size_t> buffer{};
+  buffer.reserve(n);
+  vector<size_t> fronts{0};
 
-  vector<size_t> ranks(n, 0);
-  vector<size_t> dominations(n, 0);
-  vector<vector<size_t>> dominated_sets(n);
+  // vector<size_t> ranks(n, 0);
+  // vector<size_t> dominations(n, 0);
+  // vector<vector<size_t>> dominated_sets(n);
+  // for (size_t i = 0; i < n; ++i) {
+  //   auto p = &objectives[problem.objectives * permutation[i]];
+  //   for (size_t j = 0; j < n; ++j) {
+  //     auto q = &objectives[problem.objectives * permutation[j]];
+  //     if (domination(problem.objectives, p, q))
+  //       dominated_sets[i].push_back(j);
+  //     else if (domination(problem.objectives, q, p))
+  //       ++dominations[i];
+  //   }
+  //   if (dominations[i] == 0) {
+  //     ranks[i] = 1;
+  //     buffer.push_back(i);
+  //   }
+  // }
+  // fronts.push_back(buffer.size());
+  // size_t i = 0;
+  // while (fronts[i + 1] < n) {
+  //   for (size_t k = fronts[i]; k < fronts[i + 1]; ++k) {
+  //     const auto pid = buffer[k];
 
-  for (size_t i = 0; i < n; ++i) {
+  //     for (auto qid : dominated_sets[pid]) {
+  //       --dominations[qid];
+  //       if (dominations[qid] == 0) {
+  //         ranks[qid] = i + 2;
+  //         buffer.push_back(qid);
+  //       }
+  //     }
+  //   }
+  //   ++i;
+  //   fronts.push_back(buffer.size());
+  // }
+  // for (size_t i = 0; i < buffer.size(); ++i)  //
+  //   buffer[i] = permutation[buffer[i]];
+
+  size_t back = n - 1;
+  set<size_t> pareto_indices{0};
+  for (size_t i = 1; i < n; ++i) {
     auto p = &objectives[problem.objectives * i];
-    for (size_t j = 0; j < n; ++j) {
+    bool to_add = true;
+    auto it = begin(pareto_indices);
+    for (; it != end(pareto_indices); ++it) {
+      const auto j = *it;
       auto q = &objectives[problem.objectives * j];
-      if (domination(problem.objectives, p, q))
-        dominated_sets[i].push_back(j);
-      else if (domination(problem.objectives, q, p))
-        ++dominations[i];
+      if (domination(problem.objectives, q, p)) {
+        to_add = false;
+        permutation[back] = i;
+        --back;
+        break;
+      }
+      if (domination(problem.objectives, p, q)) {
+        it = pareto_indices.erase(it);
+        permutation[back] = j;
+        --back;
+        break;
+      }
     }
-    if (dominations[i] == 0) {
-      ranks[i] = 1;
-      fronts[0].push_back(i);
+    if (to_add) {
+      for (; it != end(pareto_indices);) {
+        const auto j = *it;
+        auto q = &objectives[problem.objectives * j];
+        if (domination(problem.objectives, p, q)) {
+          it = pareto_indices.erase(it);
+          permutation[back] = j;
+          --back;
+        } else
+          ++it;
+      }
+      pareto_indices.insert(i);
     }
   }
   size_t i = 0;
-  while (!fronts[i].empty()) {
-    vector<size_t> buffer{};
-    for (auto pid : fronts[i]) {
-      for (auto qid : dominated_sets[pid]) {
-        --dominations[qid];
-        if (dominations[qid] == 0) {
-          ranks[qid] = i + 2;
-          buffer.push_back(qid);
-        }
-      }
-    }
+  for (auto j : pareto_indices) {
+    permutation[i] = j;
     ++i;
-    fronts.push_back({});
-    fronts[i] = buffer;
   }
+  fronts.push_back(pareto_indices.size());
 
-  return tuple{configurations, objectives, fronts};
+  return tuple{configurations, objectives, permutation, fronts};
 }
 
 }  // namespace nsga2
@@ -284,20 +333,31 @@ int main() {
   // gpp plot{};
   // plot << "plot 'pareto.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
 
-  size_t n = 1000;
+  size_t n = 10000;
   auto& problem = kursawe<float>;
-  const auto [pareto_configs, pareto_front, fronts] =
+
+  const auto start = chrono::high_resolution_clock::now();
+
+  const auto [pareto_configs, pareto_front, buffer, fronts] =
       nsga2::optimization(problem, rng, n);
 
+  const auto end = chrono::high_resolution_clock::now();
+  const auto time = chrono::duration<float>(end - start).count();
+
+  cout << "time = " << time << " s\n";
+
   fstream pareto_file{"pareto.dat", ios::out};
-  for (size_t i = 0; i < fronts.front().size(); ++i) {
-    const auto index = problem.objectives * fronts[0][i];
-    cout << fronts[0][i] << '\n';
-    pareto_file << pareto_front[index + 0] << '\t' << pareto_front[index + 1]
-                << '\n';
+  for (size_t k = 0; k < fronts.size() - 1; ++k) {
+    for (size_t i = fronts[k]; i < fronts[k + 1]; ++i) {
+      const auto index = problem.objectives * buffer[i];
+      // cout << fronts[0][i] << '\n';
+      pareto_file << pareto_front[index + 0] << '\t' << pareto_front[index + 1]
+                  << '\n';
+    }
+    pareto_file << '\n';
   }
   pareto_file << flush;
 
   gpp plot{};
-  plot << "plot 'pareto.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
+  plot << "plot 'pareto.dat' u 1:2 w lp lt rgb '#ff3333' pt 13\n";
 }
