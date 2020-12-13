@@ -217,13 +217,13 @@ auto initialize_population(pareto_problem&& problem, RNG&& rng, size_t n,
 
 template <typename real>
 inline auto hash_based_non_domination_sort(size_t n, size_t m, real* objectives,
-                                           size_t* permutation) {
+                                           size_t* permutation, size_t select) {
   iota(permutation, permutation + n, 0);
   vector<size_t> fronts{0};
   unordered_set<size_t> pareto_indices{};
   pareto_indices.reserve(n);
 
-  while (fronts.back() < n) {
+  while (fronts.back() < select) {
     pareto_indices.clear();
     pareto_indices.insert(permutation[0]);
     size_t front = 0;
@@ -252,9 +252,10 @@ inline auto hash_based_non_domination_sort(size_t n, size_t m, real* objectives,
       if (to_add) pareto_indices.insert(index);
     }
 
-    // size_t i = fronts.back();
+    // Order points in reverse order. Heuristics to fasten up things.
     for (size_t i = 0; i < front / 2; ++i)
       swap(permutation[i], permutation[front - 1 - i]);
+
     for (auto j : pareto_indices) {
       permutation[front] = j;
       ++front;
@@ -310,6 +311,31 @@ inline auto non_domination_sort(size_t n, size_t m, real* objectives,
   return fronts;
 }
 
+template <typename real>
+inline auto crowding_distance_sort(size_t n, size_t m, real* objectives,
+                                   size_t* permutation, size_t offset,
+                                   size_t count, real* crowding_distances) {
+  for (size_t i = 0; i < n; ++i) crowding_distances[i] = 0;
+  for (size_t v = 0; v < m; ++v) {
+    sort(permutation + offset, permutation + offset + count,
+         [&](auto x, auto y) {
+           return objectives[m * x + v] < objectives[m * y + v];
+         });
+    crowding_distances[permutation[offset]] = INFINITY;
+    crowding_distances[permutation[offset + count - 1]] = INFINITY;
+    const auto scale =
+        1 / (objectives[m * permutation[offset + count - 1] + v] -
+             objectives[m * permutation[offset] + v]);
+    for (size_t i = offset + 1; i < offset + count - 1; ++i)
+      crowding_distances[permutation[i]] +=
+          scale * (objectives[m * permutation[i + 1] + v] -
+                   objectives[m * permutation[i - 1] + v]);
+  }
+  sort(permutation + offset, permutation + offset + count, [&](auto x, auto y) {
+    return crowding_distances[x] > crowding_distances[y];
+  });
+}
+
 template <typename pareto_problem, typename RNG>
 auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
   using namespace std;
@@ -325,12 +351,28 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
   vector<size_t> permutation(n);
 
   auto fronts = hash_based_non_domination_sort(
-      n, problem.objectives, objectives.data(), permutation.data());
+      n, problem.objectives, objectives.data(), permutation.data(), n / 2);
 
   // auto fronts = non_domination_sort(n, problem.objectives, objectives.data(),
   //                                   permutation.data());
 
-  return tuple{configurations, objectives, permutation, fronts};
+  // for (auto i : fronts) cout << i << '\t';
+  // cout << '\n';
+  // for (auto i : permutation) cout << i << '\t';
+  // cout << '\n';
+
+  vector<real> crowding_distances(n, 0);
+
+  if (fronts.back() > n / 2) {
+    const auto offset = n - fronts[fronts.size() - 1];
+    const auto count = fronts[fronts.size() - 1] - fronts[fronts.size() - 2];
+    crowding_distance_sort(n, problem.objectives, objectives.data(),
+                           permutation.data(), offset, count,
+                           crowding_distances.data());
+  }
+
+  return tuple{configurations, objectives, permutation, fronts,
+               crowding_distances};
 }
 
 }  // namespace nsga2
@@ -358,7 +400,7 @@ int main() {
 
   const auto start = chrono::high_resolution_clock::now();
 
-  auto [pareto_configs, pareto_front, permutation, fronts] =
+  auto [pareto_configs, pareto_front, permutation, fronts, distances] =
       nsga2::optimization(problem, rng, n);
 
   const auto end = chrono::high_resolution_clock::now();
@@ -382,12 +424,13 @@ int main() {
       // const auto index = problem.objectives * permutation[i];
       const auto index = problem.objectives * permutation[n - 1 - i];
       pareto_file << pareto_front[index + 0] << '\t' << pareto_front[index + 1]
-                  << '\n';
+                  << '\t' << distances[permutation[n - 1 - i]] << '\n';
     }
     pareto_file << '\n';
   }
   pareto_file << flush;
 
   gpp plot{};
-  plot << "plot 'pareto.dat' u 1:2 w lp lt rgb '#ff3333' pt 13\n";
+  plot << "plot 'pareto.dat' u 1:2 w lp lt rgb '#ff3333' pt 13, "
+          "'' u 1:2:3 w yerrorbars lt rgb '#999999'\n";
 }
