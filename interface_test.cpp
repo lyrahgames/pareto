@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -13,6 +14,7 @@
 #include <span>
 #include <tuple>
 #include <type_traits>
+#include <unordered_set>
 #include <vector>
 //
 #include <lyrahgames/gpp.hpp>
@@ -212,6 +214,108 @@ auto initialize_population(pareto_problem&& problem, RNG&& rng, size_t n,
             &objectives[problem.objectives * i]);
   }
 }
+
+template <typename real>
+inline auto non_domination_sort(size_t n, size_t m, real* objectives,
+                                size_t* permutation) {
+  iota(permutation, permutation + n, 0);
+  vector<size_t> fronts{0};
+  unordered_set<size_t> pareto_indices{};
+  pareto_indices.reserve(n);
+
+  while (fronts.back() < n) {
+    pareto_indices.clear();
+    pareto_indices.insert(permutation[0]);
+    size_t front = 0;
+
+    for (size_t i = 1; i < n - fronts.back(); ++i) {
+      const auto index = permutation[i];
+      auto p = &objectives[m * index];
+      bool to_add = true;
+      auto it = begin(pareto_indices);
+      for (; it != end(pareto_indices);) {
+        const auto j = *it;
+        auto q = &objectives[m * j];
+        if (domination(m, q, p)) {
+          to_add = false;
+          permutation[front] = index;
+          ++front;
+          break;
+        }
+        if (domination(m, p, q)) {
+          it = pareto_indices.erase(it);
+          permutation[front] = j;
+          ++front;
+        } else
+          ++it;
+      }
+      if (to_add) pareto_indices.insert(index);
+    }
+
+    // size_t i = fronts.back();
+    for (size_t i = 0; i < front / 2; ++i)
+      swap(permutation[i], permutation[front - 1 - i]);
+    for (auto j : pareto_indices) {
+      permutation[front] = j;
+      ++front;
+    }
+    fronts.push_back(fronts.back() + pareto_indices.size());
+  }
+  return fronts;
+}
+
+template <typename real>
+inline auto non_domination_sort(size_t n, size_t m,
+                                const vector<real>& objectives,
+                                vector<size_t>& permutation) {
+  iota(begin(permutation), end(permutation), 0);
+  vector<size_t> fronts{0};
+  unordered_set<size_t> pareto_indices{};
+  pareto_indices.reserve(n);
+  // vector<size_t> buffer(n);
+
+  while (fronts.back() < n) {
+    pareto_indices.clear();
+    pareto_indices.insert(permutation[0]);
+    size_t front = 0;
+
+    for (size_t i = 1; i < n - fronts.back(); ++i) {
+      const auto index = permutation[i];
+      auto p = &objectives[m * index];
+      bool to_add = true;
+      auto it = begin(pareto_indices);
+      for (; it != end(pareto_indices);) {
+        const auto j = *it;
+        auto q = &objectives[m * j];
+        if (domination(m, q, p)) {
+          to_add = false;
+          permutation[front] = index;
+          ++front;
+          break;
+        }
+        if (domination(m, p, q)) {
+          it = pareto_indices.erase(it);
+          permutation[front] = j;
+          ++front;
+        } else
+          ++it;
+      }
+      if (to_add) pareto_indices.insert(index);
+    }
+
+    // size_t i = fronts.back();
+    // for (size_t i = 0; i < front; ++i) permutation[i] = buffer[i];
+    for (size_t i = 0; i < front / 2; ++i)
+      swap(permutation[i], permutation[front - 1 - i]);
+    for (auto j : pareto_indices) {
+      permutation[front] = j;
+      ++front;
+    }
+    fronts.push_back(fronts.back() + pareto_indices.size());
+  }
+  return fronts;
+}
+
 template <typename pareto_problem, typename RNG>
 auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
   using namespace std;
@@ -225,10 +329,6 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
                         objectives.data());
 
   vector<size_t> permutation(n);
-  iota(begin(permutation), end(permutation), 0);
-  vector<size_t> buffer{};
-  buffer.reserve(n);
-  vector<size_t> fronts{0};
 
   // vector<size_t> ranks(n, 0);
   // vector<size_t> dominations(n, 0);
@@ -267,48 +367,56 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
   // for (size_t i = 0; i < buffer.size(); ++i)  //
   //   buffer[i] = permutation[buffer[i]];
 
-  size_t back = n - 1;
-  set<size_t> pareto_indices{0};
-  for (size_t i = 1; i < n; ++i) {
-    auto p = &objectives[problem.objectives * i];
-    bool to_add = true;
-    auto it = begin(pareto_indices);
-    for (; it != end(pareto_indices); ++it) {
-      const auto j = *it;
-      auto q = &objectives[problem.objectives * j];
-      if (domination(problem.objectives, q, p)) {
-        to_add = false;
-        permutation[back] = i;
-        --back;
-        break;
-      }
-      if (domination(problem.objectives, p, q)) {
-        it = pareto_indices.erase(it);
-        permutation[back] = j;
-        --back;
-        break;
-      }
-    }
-    if (to_add) {
-      for (; it != end(pareto_indices);) {
-        const auto j = *it;
-        auto q = &objectives[problem.objectives * j];
-        if (domination(problem.objectives, p, q)) {
-          it = pareto_indices.erase(it);
-          permutation[back] = j;
-          --back;
-        } else
-          ++it;
-      }
-      pareto_indices.insert(i);
-    }
-  }
-  size_t i = 0;
-  for (auto j : pareto_indices) {
-    permutation[i] = j;
-    ++i;
-  }
-  fronts.push_back(pareto_indices.size());
+  // iota(begin(permutation), end(permutation), 0);
+  // vector<size_t> buffer(n);
+  // iota(begin(buffer), end(buffer), 0);
+  // vector<size_t> fronts{0};
+  // unordered_set<size_t> pareto_indices;
+  // pareto_indices.reserve(n);
+
+  // while (fronts.back() < n) {
+  //   size_t back = n - 1;
+  //   // set<size_t> pareto_indices{permutation[fronts.back()]};
+  //   pareto_indices.clear();
+  //   pareto_indices.insert(permutation[fronts.back()]);
+
+  //   for (size_t i = fronts.back() + 1; i < n; ++i) {
+  //     auto p = &objectives[problem.objectives * permutation[i]];
+  //     bool to_add = true;
+  //     auto it = begin(pareto_indices);
+  //     for (; it != end(pareto_indices);) {
+  //       const auto j = *it;
+  //       auto q = &objectives[problem.objectives * j];
+  //       if (domination(problem.objectives, q, p)) {
+  //         to_add = false;
+  //         buffer[back] = permutation[i];
+  //         --back;
+  //         break;
+  //       }
+  //       if (domination(problem.objectives, p, q)) {
+  //         it = pareto_indices.erase(it);
+  //         buffer[back] = j;
+  //         --back;
+  //       } else
+  //         ++it;
+  //     }
+  //     if (to_add) pareto_indices.insert(permutation[i]);
+  //   }
+  //   size_t i = 0;
+  //   for (; i < fronts.back(); ++i) buffer[i] = permutation[i];
+  //   for (auto j : pareto_indices) {
+  //     buffer[i] = j;
+  //     ++i;
+  //   }
+  //   fronts.push_back(fronts.back() + pareto_indices.size());
+  //   permutation.swap(buffer);
+  // }
+
+  auto fronts = non_domination_sort(n, problem.objectives, objectives.data(),
+                                    permutation.data());
+
+  // auto fronts =
+  //     non_domination_sort(n, problem.objectives, objectives, permutation);
 
   return tuple{configurations, objectives, permutation, fronts};
 }
@@ -333,24 +441,34 @@ int main() {
   // gpp plot{};
   // plot << "plot 'pareto.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
 
-  size_t n = 10000;
+  size_t n = 100;
   auto& problem = kursawe<float>;
 
   const auto start = chrono::high_resolution_clock::now();
 
-  const auto [pareto_configs, pareto_front, buffer, fronts] =
+  auto [pareto_configs, pareto_front, permutation, fronts] =
       nsga2::optimization(problem, rng, n);
 
   const auto end = chrono::high_resolution_clock::now();
   const auto time = chrono::duration<float>(end - start).count();
 
-  cout << "time = " << time << " s\n";
+  cout << "time = " << time << " s\n" << flush;
 
   fstream pareto_file{"pareto.dat", ios::out};
   for (size_t k = 0; k < fronts.size() - 1; ++k) {
+    // sort(begin(permutation) + fronts[k], begin(permutation) + fronts[k + 1],
+    //      [&](auto x, auto y) {
+    //        return pareto_front[problem.objectives * x] <=
+    //               pareto_front[problem.objectives * y];
+    //      });
+    sort(begin(permutation) + (n - fronts[k + 1]),
+         begin(permutation) + (n - fronts[k]), [&](auto x, auto y) {
+           return pareto_front[problem.objectives * x] <=
+                  pareto_front[problem.objectives * y];
+         });
     for (size_t i = fronts[k]; i < fronts[k + 1]; ++i) {
-      const auto index = problem.objectives * buffer[i];
-      // cout << fronts[0][i] << '\n';
+      // const auto index = problem.objectives * permutation[i];
+      const auto index = problem.objectives * permutation[n - 1 - i];
       pareto_file << pareto_front[index + 0] << '\t' << pareto_front[index + 1]
                   << '\n';
     }
