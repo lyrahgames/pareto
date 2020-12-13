@@ -216,8 +216,8 @@ auto initialize_population(pareto_problem&& problem, RNG&& rng, size_t n,
 }
 
 template <typename real>
-inline auto non_domination_sort(size_t n, size_t m, real* objectives,
-                                size_t* permutation) {
+inline auto hash_based_non_domination_sort(size_t n, size_t m, real* objectives,
+                                           size_t* permutation) {
   iota(permutation, permutation + n, 0);
   vector<size_t> fronts{0};
   unordered_set<size_t> pareto_indices{};
@@ -265,54 +265,48 @@ inline auto non_domination_sort(size_t n, size_t m, real* objectives,
 }
 
 template <typename real>
-inline auto non_domination_sort(size_t n, size_t m,
-                                const vector<real>& objectives,
-                                vector<size_t>& permutation) {
-  iota(begin(permutation), end(permutation), 0);
+inline auto non_domination_sort(size_t n, size_t m, real* objectives,
+                                size_t* permutation) {
   vector<size_t> fronts{0};
-  unordered_set<size_t> pareto_indices{};
-  pareto_indices.reserve(n);
-  // vector<size_t> buffer(n);
+  vector<size_t> ranks(n, 0);
+  vector<size_t> dominations(n, 0);
+  vector<vector<size_t>> dominated_sets(n);
+  size_t front = 0;
 
-  while (fronts.back() < n) {
-    pareto_indices.clear();
-    pareto_indices.insert(permutation[0]);
-    size_t front = 0;
-
-    for (size_t i = 1; i < n - fronts.back(); ++i) {
-      const auto index = permutation[i];
-      auto p = &objectives[m * index];
-      bool to_add = true;
-      auto it = begin(pareto_indices);
-      for (; it != end(pareto_indices);) {
-        const auto j = *it;
-        auto q = &objectives[m * j];
-        if (domination(m, q, p)) {
-          to_add = false;
-          permutation[front] = index;
-          ++front;
-          break;
-        }
-        if (domination(m, p, q)) {
-          it = pareto_indices.erase(it);
-          permutation[front] = j;
-          ++front;
-        } else
-          ++it;
-      }
-      if (to_add) pareto_indices.insert(index);
+  for (size_t i = 0; i < n; ++i) {
+    auto p = &objectives[m * i];
+    for (size_t j = 0; j < n; ++j) {
+      auto q = &objectives[m * j];
+      if (domination(m, p, q))
+        dominated_sets[i].push_back(j);
+      else if (domination(m, q, p))
+        ++dominations[i];
     }
-
-    // size_t i = fronts.back();
-    // for (size_t i = 0; i < front; ++i) permutation[i] = buffer[i];
-    for (size_t i = 0; i < front / 2; ++i)
-      swap(permutation[i], permutation[front - 1 - i]);
-    for (auto j : pareto_indices) {
-      permutation[front] = j;
+    if (dominations[i] == 0) {
+      ranks[i] = 1;
+      permutation[front] = i;
       ++front;
     }
-    fronts.push_back(fronts.back() + pareto_indices.size());
   }
+  fronts.push_back(front);
+  size_t i = 0;
+  while (front < n) {
+    for (size_t k = fronts[i]; k < fronts[i + 1]; ++k) {
+      const auto pid = permutation[k];
+
+      for (auto qid : dominated_sets[pid]) {
+        --dominations[qid];
+        if (dominations[qid] == 0) {
+          ranks[qid] = i + 2;
+          permutation[front] = qid;
+          ++front;
+        }
+      }
+    }
+    ++i;
+    fronts.push_back(front);
+  }
+
   return fronts;
 }
 
@@ -330,93 +324,11 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
 
   vector<size_t> permutation(n);
 
-  // vector<size_t> ranks(n, 0);
-  // vector<size_t> dominations(n, 0);
-  // vector<vector<size_t>> dominated_sets(n);
-  // for (size_t i = 0; i < n; ++i) {
-  //   auto p = &objectives[problem.objectives * permutation[i]];
-  //   for (size_t j = 0; j < n; ++j) {
-  //     auto q = &objectives[problem.objectives * permutation[j]];
-  //     if (domination(problem.objectives, p, q))
-  //       dominated_sets[i].push_back(j);
-  //     else if (domination(problem.objectives, q, p))
-  //       ++dominations[i];
-  //   }
-  //   if (dominations[i] == 0) {
-  //     ranks[i] = 1;
-  //     buffer.push_back(i);
-  //   }
-  // }
-  // fronts.push_back(buffer.size());
-  // size_t i = 0;
-  // while (fronts[i + 1] < n) {
-  //   for (size_t k = fronts[i]; k < fronts[i + 1]; ++k) {
-  //     const auto pid = buffer[k];
+  auto fronts = hash_based_non_domination_sort(
+      n, problem.objectives, objectives.data(), permutation.data());
 
-  //     for (auto qid : dominated_sets[pid]) {
-  //       --dominations[qid];
-  //       if (dominations[qid] == 0) {
-  //         ranks[qid] = i + 2;
-  //         buffer.push_back(qid);
-  //       }
-  //     }
-  //   }
-  //   ++i;
-  //   fronts.push_back(buffer.size());
-  // }
-  // for (size_t i = 0; i < buffer.size(); ++i)  //
-  //   buffer[i] = permutation[buffer[i]];
-
-  // iota(begin(permutation), end(permutation), 0);
-  // vector<size_t> buffer(n);
-  // iota(begin(buffer), end(buffer), 0);
-  // vector<size_t> fronts{0};
-  // unordered_set<size_t> pareto_indices;
-  // pareto_indices.reserve(n);
-
-  // while (fronts.back() < n) {
-  //   size_t back = n - 1;
-  //   // set<size_t> pareto_indices{permutation[fronts.back()]};
-  //   pareto_indices.clear();
-  //   pareto_indices.insert(permutation[fronts.back()]);
-
-  //   for (size_t i = fronts.back() + 1; i < n; ++i) {
-  //     auto p = &objectives[problem.objectives * permutation[i]];
-  //     bool to_add = true;
-  //     auto it = begin(pareto_indices);
-  //     for (; it != end(pareto_indices);) {
-  //       const auto j = *it;
-  //       auto q = &objectives[problem.objectives * j];
-  //       if (domination(problem.objectives, q, p)) {
-  //         to_add = false;
-  //         buffer[back] = permutation[i];
-  //         --back;
-  //         break;
-  //       }
-  //       if (domination(problem.objectives, p, q)) {
-  //         it = pareto_indices.erase(it);
-  //         buffer[back] = j;
-  //         --back;
-  //       } else
-  //         ++it;
-  //     }
-  //     if (to_add) pareto_indices.insert(permutation[i]);
-  //   }
-  //   size_t i = 0;
-  //   for (; i < fronts.back(); ++i) buffer[i] = permutation[i];
-  //   for (auto j : pareto_indices) {
-  //     buffer[i] = j;
-  //     ++i;
-  //   }
-  //   fronts.push_back(fronts.back() + pareto_indices.size());
-  //   permutation.swap(buffer);
-  // }
-
-  auto fronts = non_domination_sort(n, problem.objectives, objectives.data(),
-                                    permutation.data());
-
-  // auto fronts =
-  //     non_domination_sort(n, problem.objectives, objectives, permutation);
+  // auto fronts = non_domination_sort(n, problem.objectives, objectives.data(),
+  //                                   permutation.data());
 
   return tuple{configurations, objectives, permutation, fronts};
 }
