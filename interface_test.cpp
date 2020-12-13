@@ -332,8 +332,96 @@ inline auto crowding_distance_sort(size_t n, size_t m, real* objectives,
                    objectives[m * permutation[i - 1] + v]);
   }
   sort(permutation + offset, permutation + offset + count, [&](auto x, auto y) {
-    return crowding_distances[x] > crowding_distances[y];
+    return crowding_distances[x] < crowding_distances[y];
   });
+}
+
+template <typename pareto_problem, typename RNG,
+          typename real =
+              remove_pointer_t<lyrahgames::meta::argument<pareto_problem, 1>>>
+void simulated_binary_crossover(pareto_problem&& problem, RNG&& rng,
+                                real* configurations, real* objectives,
+                                size_t parent1, size_t parent2,
+                                size_t offspring1, size_t offspring2) {
+  using namespace std;
+
+  constexpr real distribution_index = 2;
+  constexpr auto distribution_index_coeff = 1 / (distribution_index + 1);
+
+  uniform_real_distribution<real> distribution{0, 1};
+
+  for (size_t i = 0; i < problem.configurations; ++i) {
+    const auto random = distribution(rng);
+    const auto beta =
+        (random <= real(0.5))
+            ? (pow(2 * random, distribution_index_coeff))
+            : (pow(1 / (2 * (1 - random)), distribution_index_coeff));
+    const auto tmp1 =
+        real(0.5) *
+        ((1 + beta) * configurations[problem.configurations * parent1 + i] +
+         (1 - beta) * configurations[problem.configurations * parent2 + i]);
+    const auto tmp2 =
+        real(0.5) *
+        ((1 - beta) * configurations[problem.configurations * parent1 + i] +
+         (1 + beta) * configurations[problem.configurations * parent2 + i]);
+    const auto [a, b] = problem.box(i);
+    configurations[problem.configurations * offspring1 + i] = clamp(tmp1, a, b);
+    configurations[problem.configurations * offspring2 + i] = clamp(tmp2, a, b);
+  }
+  problem(&configurations[problem.configurations * offspring1],
+          &objectives[problem.objectives * offspring1]);
+  problem(&configurations[problem.configurations * offspring2],
+          &objectives[problem.objectives * offspring2]);
+}
+
+template <typename pareto_problem, typename RNG,
+          typename real =
+              remove_pointer_t<lyrahgames::meta::argument<pareto_problem, 1>>>
+void alternate_random_mutation(pareto_problem&& problem, RNG&& rng,
+                               real* configurations, real* objectives,
+                               size_t parent, size_t offspring) {
+  constexpr real stepsize = 0.1;
+
+  uniform_real_distribution<real> distribution{-1, 1};
+
+  for (size_t k = 0; k < problem.configurations; ++k) {
+    const auto random = distribution(rng);
+    const auto [a, b] = problem.box(k);
+    const auto tmp = configurations[problem.configurations * parent + k] +
+                     random * stepsize * (b - a);
+    configurations[problem.configurations * offspring + k] = clamp(tmp, a, b);
+  }
+  problem(&configurations[problem.configurations * offspring],
+          &objectives[problem.objectives * offspring]);
+}
+
+template <typename pareto_problem, typename RNG,
+          typename real =
+              remove_pointer_t<lyrahgames::meta::argument<pareto_problem, 1>>>
+void populate(pareto_problem&& problem, RNG&& rng, size_t n,
+              real* configurations, real* objectives, size_t* permutation,
+              size_t select) {
+  using namespace std;
+
+  constexpr real probability_crossover = 0.3;
+  const size_t count = n - select;
+  const size_t crossovers = 2 * size_t(probability_crossover * (count / 2));
+
+  uniform_int_distribution<size_t> distribution{0, select - 1};
+
+  size_t i = 0;
+  for (; i < crossovers; i += 2) {
+    const auto parent1 = permutation[n - 1 - distribution(rng)];
+    const auto parent2 = permutation[n - 1 - distribution(rng)];
+    simulated_binary_crossover(
+        problem, rng, configurations, objectives, parent1, parent2,
+        permutation[n - 1 - select - i], permutation[n - 1 - select - i - 1]);
+  }
+  for (; i < count; ++i) {
+    const auto parent = permutation[n - 1 - distribution(rng)];
+    alternate_random_mutation(problem, rng, configurations, objectives, parent,
+                              permutation[n - 1 - select - i]);
+  }
 }
 
 template <typename pareto_problem, typename RNG>
@@ -344,25 +432,38 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
 
   vector<real> configurations(n * problem.configurations);
   vector<real> objectives(n * problem.objectives);
+  vector<size_t> permutation(n);
+  vector<real> crowding_distances(n, 0);
+  vector<size_t> fronts;
 
   initialize_population(problem, rng, n, configurations.data(),
                         objectives.data());
 
-  vector<size_t> permutation(n);
+  for (size_t it = 0; it < 1000; ++it) {
+    fronts = hash_based_non_domination_sort(
+        n, problem.objectives, objectives.data(), permutation.data(), n / 2);
 
-  auto fronts = hash_based_non_domination_sort(
+    // auto fronts = non_domination_sort(n, problem.objectives,
+    // objectives.data(),
+    //                                   permutation.data());
+
+    // for (auto i : permutation) cout << i << '\t';
+    // cout << '\n';
+
+    if (fronts.back() > n / 2) {
+      const auto offset = n - fronts[fronts.size() - 1];
+      const auto count = fronts[fronts.size() - 1] - fronts[fronts.size() - 2];
+      crowding_distance_sort(n, problem.objectives, objectives.data(),
+                             permutation.data(), offset, count,
+                             crowding_distances.data());
+    }
+
+    populate(problem, rng, n, configurations.data(), objectives.data(),
+             permutation.data(), n / 2);
+  }
+
+  fronts = hash_based_non_domination_sort(
       n, problem.objectives, objectives.data(), permutation.data(), n / 2);
-
-  // auto fronts = non_domination_sort(n, problem.objectives, objectives.data(),
-  //                                   permutation.data());
-
-  // for (auto i : fronts) cout << i << '\t';
-  // cout << '\n';
-  // for (auto i : permutation) cout << i << '\t';
-  // cout << '\n';
-
-  vector<real> crowding_distances(n, 0);
-
   if (fronts.back() > n / 2) {
     const auto offset = n - fronts[fronts.size() - 1];
     const auto count = fronts[fronts.size() - 1] - fronts[fronts.size() - 2];
@@ -370,6 +471,11 @@ auto optimization(pareto_problem&& problem, RNG&& rng, size_t n) {
                            permutation.data(), offset, count,
                            crowding_distances.data());
   }
+
+  // fronts.back() = n / 2;
+  // fronts.push_back(n);
+  for (auto i : fronts) cout << i << '\t';
+  cout << '\n';
 
   return tuple{configurations, objectives, permutation, fronts,
                crowding_distances};
@@ -396,7 +502,7 @@ int main() {
   // plot << "plot 'pareto.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
 
   size_t n = 100;
-  auto& problem = kursawe<float>;
+  auto& problem = zdt3<float>;
 
   const auto start = chrono::high_resolution_clock::now();
 
@@ -431,6 +537,6 @@ int main() {
   pareto_file << flush;
 
   gpp plot{};
-  plot << "plot 'pareto.dat' u 1:2 w lp lt rgb '#ff3333' pt 13, "
-          "'' u 1:2:3 w yerrorbars lt rgb '#999999'\n";
+  plot << "plot 'pareto.dat' u 1:2 w lp lt rgb '#ff3333' pt 13\n";
+  // "'' u 1:2:3 w yerrorbars lt rgb '#999999'\n";
 }
