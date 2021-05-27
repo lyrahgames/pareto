@@ -1,23 +1,25 @@
-./: tests/ manifest doc{*.md} legal{COPYING}
+import intf_libs = lyrahgames-xstd%lib{lyrahgames-xstd}
 
-./: lib{lyrahgames-pareto}: lyrahgames/hxx{**}
+./: lib{lyrahgames-pareto}: \
+  lyrahgames/pareto/hxx{** -version} \
+  lyrahgames/pareto/hxx{version} \
+  $intf_libs
 {
   cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.libs = $intf_libs
 }
+cxx.poptions =+ "-I$out_root" "-I$src_root"
+
+lyrahgames/pareto/
+{
+  hxx{version}: in{version} $src_root/manifest
+  {
+    dist = true
+    clean = ($src_root != $out_root)
+  }
+}
+
 hxx{**}: install.subdirs = true
 
+./: tests/ manifest doc{README.md AUTHORS.md} legal{COPYING.md}
 tests/: install = false
-
-./: exe{main}: cxx{main} hxx{gpp}
-./: exe{kursawe_nsga2}: cxx{kursawe_nsga2} hxx{**}
-./: exe{nsga2}: cxx{nsga2} hxx{**}
-./: exe{kursawe_naive}: cxx{kursawe_naive} hxx{**}
-./: exe{viennet_naive}: cxx{viennet_naive} hxx{**}
-./: exe{surface_naive}: cxx{surface_naive} hxx{**}
-
-./: exe{constraints}: cxx{constraints} hxx{**}
-./: exe{nsga2_constrained}: cxx{nsga2_constrained} hxx{**}
-
-./: exe{ranges_test}: cxx{ranges_test} hxx{**}
-
-./: exe{interface_test}: cxx{interface_test} hxx{**}

@@ -7,5 +7,3 @@ cxx{*}: extension = cpp
 test.target = $cxx.target
 
 exe{*}: test = true
-
-cxx.poptions =+ "-I$out_root" "-I$src_root"

@@ -1,0 +1,2 @@
+import libs += doctest%lib{doctest}
+exe{basic-tests}: {hxx cxx}{**} $libs

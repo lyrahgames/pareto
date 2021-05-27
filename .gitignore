@@ -2,15 +2,22 @@
 !*/
 
 !*.hpp
+!*.ipp
+!*.tpp
 !*.cpp
+!*.in
 
 !buildfile
-!manifest
 !bootstrap.build
 !root.build
 !export.build
+!*manifest
 
-!README.md
-!COPYING
+!*.md
 
+!.clang-format
+
+!.githooks/**
+!.gitmodules
+!.gitattributes
 !.gitignore
