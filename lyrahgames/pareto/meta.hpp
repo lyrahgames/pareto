@@ -1,20 +1,52 @@
 #pragma once
 #include <concepts>
 #include <functional>
+#include <ranges>
+//
+#include <lyrahgames/xstd/forward.hpp>
+#include <lyrahgames/xstd/meta.hpp>
 
-namespace lyrahgames {
+namespace lyrahgames::pareto {
+
+namespace generic {
+
+using namespace lyrahgames::xstd::generic;
+
+template <typename T>
+concept random_number_generator = true;
+
+template <typename T>
+concept real = std::floating_point<T>;
+
+template <typename T>
+concept problem = real<typename T::real> &&
+    requires(T& p, size_t i, T::real& a, T::real& b) {
+  { p.parameter_count() } -> identical<size_t>;
+  { p.objective_count() } -> identical<size_t>;
+  std::tie(a, b) = p.box(i);
+};
+
+template <typename T>
+concept optimizer = true;
+
+template <typename T, typename real>
+concept range = (std::ranges::random_access_range<T> &&
+                 std::same_as<real, std::ranges::range_value_t<T>>);
+
+template <typename T>
+concept frontier = true;
+
+}  // namespace generic
 
 namespace generic {
 
 template <typename T>
 concept array =      //
     std::regular<T>  //
-        &&           //
+    &&               //
     requires(T v, size_t i) {
-  { size(v) }
-  ->std::unsigned_integral;
-  { size(v) }
-  ->std::convertible_to<size_t>;
+  { size(v) } -> std::unsigned_integral;
+  { size(v) } -> std::convertible_to<size_t>;
   v[i];
   requires std::is_constructible_v<
       T, std::initializer_list<std::decay_t<decltype(v[i])>>>;
@@ -34,8 +66,7 @@ concept callable = requires(T v) {
 template <typename T>
 concept vector = requires(T v) {
   requires std::is_floating_point_v<std::decay_t<decltype(v[0])>>;
-  { size(v) }
-  ->std::same_as<size_t>;
+  { size(v) } -> std::same_as<size_t>;
 };
 
 }  // namespace generic
@@ -114,8 +145,8 @@ template <generic::callable T>
 using result = std::decay_t<qualified_result<T>>;
 
 template <generic::callable T>
-constexpr auto argument_count =
-    decltype(function{std::declval<T>()})::argument_count;
+constexpr auto argument_count = decltype(function{
+    std::declval<T>()})::argument_count;
 
 template <generic::callable T>
 using arguments = typename decltype(function{std::declval<T>()})::arguments;
@@ -138,15 +169,15 @@ namespace generic {
 template <typename T, typename U>
 concept compatible_vectors =  //
     generic::vector<T>        //
-        &&generic::vector<U>  //
-            &&std::same_as<meta::value<T>, meta::value<U>>;
+    && generic::vector<U>     //
+    && std::same_as<meta::value<T>, meta::value<U>>;
 
 template <typename T>
-concept vector_field =                 //
-    callable<T>                        //
-    && (meta::argument_count<T> == 1)  //
+concept vector_field =                //
+    callable<T>                       //
+    &&(meta::argument_count<T> == 1)  //
     && compatible_vectors<meta::result<T>, meta::argument<T, 0>>;
 
 }  // namespace generic
 
-}  // namespace lyrahgames
+}  // namespace lyrahgames::pareto

@@ -21,5 +21,6 @@ lyrahgames/pareto/
 
 hxx{**}: install.subdirs = true
 
-./: tests/ manifest doc{README.md AUTHORS.md} legal{COPYING.md}
+./: tests/ examples/ manifest doc{README.md AUTHORS.md} legal{COPYING.md}
 tests/: install = false
+examples/: install = false

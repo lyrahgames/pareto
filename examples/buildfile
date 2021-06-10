@@ -1,0 +1,5 @@
+import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
+import libs += lyrahgames-gnuplot-pipe%lib{lyrahgames-gnuplot-pipe}
+
+./: exe{kursawe}: cxx{kursawe} $libs
+./: exe{zdt3}: cxx{zdt3} $libs
