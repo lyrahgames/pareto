@@ -3,3 +3,5 @@ import libs += lyrahgames-gnuplot-pipe%lib{lyrahgames-gnuplot-pipe}
 
 ./: exe{kursawe}: cxx{kursawe} $libs
 ./: exe{zdt3}: cxx{zdt3} $libs
+
+./: exe{kursawe_nsga2}: cxx{kursawe_nsga2} $libs
