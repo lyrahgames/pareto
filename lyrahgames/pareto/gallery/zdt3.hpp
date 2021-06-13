@@ -18,7 +18,7 @@ struct zdt3_problem {
   static constexpr auto box(size_t i) { return std::pair<real, real>{0, 1}; }
 
   void evaluate(const generic::range<real> auto& x,
-                generic::range<real> auto& y) {
+                generic::range<real> auto&& y) {
     using namespace std;
     assert(ranges::size(x) == parameter_count());
     assert(ranges::size(y) == objective_count());

@@ -12,6 +12,7 @@
 #include <vector>
 //
 #include <lyrahgames/pareto/domination.hpp>
+#include <lyrahgames/pareto/frontier_cast.hpp>
 #include <lyrahgames/pareto/meta.hpp>
 
 namespace lyrahgames::pareto {
@@ -25,6 +26,7 @@ class optimizer {
   using real = typename problem_type::real;
   using size_type = size_t;
 
+  optimizer() = default;
   optimizer(size_type samples) : s(samples), select(samples / 2) { init(); }
 
   void init() {
@@ -40,24 +42,24 @@ class optimizer {
   void init_population(generic::random_number_generator auto&& rng) {
     using namespace std;
 
-    uniform_real_distribution<real> distribution{0, 1};
-    const auto uniform = [&] { return distribution(rng); };
-
+    // Introduce short-hand notations.
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
+
+    // Generate oracle for random numbers.
+    uniform_real_distribution<real> distribution{0, 1};
+    const auto random = [&] { return distribution(rng); };
 
     // Iterate over all possible samples.
     for (size_type i = 0; i < s; ++i) {
       // Generate uniformly distributed parameter samples.
       for (size_type j = 0; j < n; ++j) {
-        const auto rnd = uniform();
         const auto [a, b] = problem.box(j);
-        parameters[n * i + j] = rnd * a + (1 - rnd) * b;
+        parameters[n * i + j] = lerp(a, b, random());
       }
       // Evaluate their respective objectives.
-      auto dest = span{&objectives[m * i], &objectives[m * (i + 1)]};
       problem.evaluate(span{&parameters[n * i], &parameters[n * (i + 1)]},
-                       dest);
+                       span{&objectives[m * i], &objectives[m * (i + 1)]});
     }
   }
 
@@ -229,18 +231,6 @@ class optimizer {
       parameters[n * offspring1 + i] = clamp(tmp1, a, b);
       parameters[n * offspring2 + i] = clamp(tmp2, a, b);
     }
-
-    auto dest1 =
-        span{&objectives[m * offspring1], &objectives[m * (offspring1 + 1)]};
-    problem.evaluate(
-        span{&parameters[n * offspring1], &parameters[n * (offspring1 + 1)]},
-        dest1);
-
-    auto dest2 =
-        span{&objectives[m * offspring2], &objectives[m * (offspring2 + 1)]};
-    problem.evaluate(
-        span{&parameters[n * offspring2], &parameters[n * (offspring2 + 1)]},
-        dest2);
   }
 
   void alternate_random_mutation(size_type parent,
@@ -248,6 +238,7 @@ class optimizer {
                                  generic::random_number_generator auto&& rng) {
     using namespace std;
 
+    // Introduce short-hand notations.
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
 
@@ -266,48 +257,60 @@ class optimizer {
       // Make sure the new parameters fulfill the box constraints.
       parameters[n * offspring + k] = clamp(value, a, b);
     }
-
-    // Evaluate the objectives of the new point.
-    auto dest =
-        span{&objectives[m * offspring], &objectives[m * (offspring + 1)]};
-    problem.evaluate(
-        span{&parameters[n * offspring], &parameters[n * (offspring + 1)]},
-        dest);
   }
 
   void populate(generic::random_number_generator auto&& rng) {
     using namespace std;
 
+    // Introduce short-hand notations.
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
 
-    constexpr real probability_crossover = 0.3;
-    const size_type count = s - select;
-    const size_type crossovers =
-        2 * size_type(probability_crossover * (count / 2));
+    // Add oracle for random index.
+    // All good points are stored at the end of the permutation.
+    uniform_int_distribution<size_type> distribution{s - select, s - 1};
+    const auto random = [&] { return distribution(rng); };
 
-    uniform_int_distribution<size_type> distribution{0, select - 1};
+    const size_type count = s - select;
+    const size_type crossover_count =
+        2 * size_type(crossover_probability * (count / 2));
 
     size_type i = 0;
 
-    for (; i < crossovers; i += 2) {
-      const auto parent1 = permutation[s - 1 - distribution(rng)];
-      const auto parent2 = permutation[s - 1 - distribution(rng)];
-      const auto offspring1 = permutation[s - 1 - select - i];
-      const auto offspring2 = permutation[s - 1 - select - i - 1];
+    for (; i < crossover_count; i += 2) {
+      const auto parent1 = permutation[random()];
+      const auto parent2 = permutation[random()];
+      const auto offspring1 = permutation[i + 0];
+      const auto offspring2 = permutation[i + 1];
+
       simulated_binary_crossover(parent1, parent2, offspring1, offspring2, rng);
+
+      problem.evaluate(
+          span{&parameters[n * offspring1], &parameters[n * (offspring1 + 1)]},
+          span{&objectives[m * offspring1], &objectives[m * (offspring1 + 1)]});
+
+      problem.evaluate(
+          span{&parameters[n * offspring2], &parameters[n * (offspring2 + 1)]},
+          span{&objectives[m * offspring2], &objectives[m * (offspring2 + 1)]});
     }
 
     for (; i < count; ++i) {
-      const auto parent = permutation[s - 1 - distribution(rng)];
-      const auto offspring = permutation[s - 1 - select - i];
+      const auto parent = permutation[random()];
+      const auto offspring = permutation[i];
+
       alternate_random_mutation(parent, offspring, rng);
+
+      // Evaluate the objectives of the new point.
+      problem.evaluate(
+          span{&parameters[n * offspring], &parameters[n * (offspring + 1)]},
+          span{&objectives[m * offspring], &objectives[m * (offspring + 1)]});
     }
   }
 
-  void optimize(generic::random_number_generator auto&& rng) {
+  void optimize(size_type iterations,
+                generic::random_number_generator auto&& rng) {
     init_population(rng);
-    for (size_type it = 0; it < max_it; ++it) {
+    for (size_type i = 0; i < iterations; ++i) {
       non_dominated_sort();
       crowding_distance_sort();
       populate(rng);
@@ -316,17 +319,41 @@ class optimizer {
     crowding_distance_sort();
   }
 
+  template <generic::frontier frontier_type>
+  auto frontier_cast() const {
+    using namespace std;
+    const auto n = problem.parameter_count();
+    const auto m = problem.objective_count();
+    frontier_type frontier{fronts[1], n, m};
+    for (size_type i = 0; i < fronts[1]; ++i) {
+      const auto index = permutation[s - 1 - i];
+      {
+        auto it = frontier.parameters_iterator(i);
+        for (size_type j = 0; j < n; ++j, ++it)
+          *it = parameters[n * index + j];
+      }
+      {
+        auto it = frontier.objectives_iterator(i);
+        for (size_type j = 0; j < m; ++j, ++it)
+          *it = objectives[m * index + j];
+      }
+    }
+    return frontier;
+  }
+
   // private:
   problem_type problem{};
-  size_type s;
-  size_type max_it = 1000;
-  size_type select;
-  std::vector<real> parameters;
-  std::vector<real> objectives;
-  std::vector<size_type> permutation;
-  std::vector<real> crowding_distances;
-  std::vector<size_type> fronts;
+
+  std::vector<real> parameters{};
+  std::vector<real> objectives{};
+  std::vector<size_type> permutation{};
+  std::vector<real> crowding_distances{};
+  std::vector<size_type> fronts{};
   std::unordered_set<size_type> pareto_indices{};
+
+  size_type s{};
+  size_type select{};
+  real crossover_probability = 0.3;
 };
 
 }  // namespace nsga2
