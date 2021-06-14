@@ -23,7 +23,7 @@ class optimizer {
   using container = std::map<objective_vector, parameter_vector>;
 
   optimizer() = default;
-  optimizer(problem_type p) : problem(p) {}
+  explicit optimizer(problem_type p) : problem(p) {}
 
   void optimize(size_t samples, generic::random_number_generator auto&& rng) {
     using namespace std;

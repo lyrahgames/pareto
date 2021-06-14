@@ -14,6 +14,7 @@
 #include <lyrahgames/pareto/domination.hpp>
 #include <lyrahgames/pareto/frontier_cast.hpp>
 #include <lyrahgames/pareto/meta.hpp>
+// #include <lyrahgames/pareto/simulated_binary_crossover.hpp>
 
 namespace lyrahgames::pareto {
 
@@ -26,8 +27,13 @@ class optimizer {
   using real = typename problem_type::real;
   using size_type = size_t;
 
+  // using crossoverer = struct simulated_binary_crossover<real>;
+
   optimizer() = default;
-  optimizer(size_type samples) : s(samples), select(samples / 2) { init(); }
+  explicit optimizer(problem_type p, size_type samples = 1000)
+      : problem(p), s(samples), select(samples / 2) {
+    init();
+  }
 
   void init() {
     const auto n = problem.parameter_count();
@@ -37,6 +43,29 @@ class optimizer {
     permutation.resize(s);
     crowding_distances.resize(s);
     pareto_indices.reserve(s);
+  }
+
+  /// Clamp the parameters referenced by the given index to the box constraints
+  /// defined by the current problem.
+  void clamp(size_type index) {
+    using std::clamp;
+    const auto n = problem.parameter_count();
+    for (size_type i = 0; i < n; ++i) {
+      const auto [a, b] = problem.box(i);
+      const auto x = parameters[n * index + i];
+      parameters[n * index + i] = clamp(x, a, b);
+    }
+  }
+
+  /// Evaluate all objectives at the given index by using the parameters
+  /// referenced by the given index.
+  void evaluate(size_type index) {
+    using std::span;
+    const auto n = problem.parameter_count();
+    const auto m = problem.objective_count();
+    problem.evaluate(
+        span{&parameters[n * index], &parameters[n * (index + 1)]},
+        span{&objectives[m * index], &objectives[m * (index + 1)]});
   }
 
   void init_population(generic::random_number_generator auto&& rng) {
@@ -57,9 +86,7 @@ class optimizer {
         const auto [a, b] = problem.box(j);
         parameters[n * i + j] = lerp(a, b, random());
       }
-      // Evaluate their respective objectives.
-      problem.evaluate(span{&parameters[n * i], &parameters[n * (i + 1)]},
-                       span{&objectives[m * i], &objectives[m * (i + 1)]});
+      evaluate(i);
     }
   }
 
@@ -227,9 +254,12 @@ class optimizer {
       const auto tmp2 = real(0.5) * ((1 - beta) * parameters[n * parent1 + i] +
                                      (1 + beta) * parameters[n * parent2 + i]);
 
-      const auto [a, b] = problem.box(i);
-      parameters[n * offspring1 + i] = clamp(tmp1, a, b);
-      parameters[n * offspring2 + i] = clamp(tmp2, a, b);
+      parameters[n * offspring1 + i] = tmp1;
+      parameters[n * offspring2 + i] = tmp2;
+
+      // const auto [a, b] = problem.box(i);
+      // parameters[n * offspring1 + i] = clamp(tmp1, a, b);
+      // parameters[n * offspring2 + i] = clamp(tmp2, a, b);
     }
   }
 
@@ -255,7 +285,8 @@ class optimizer {
       const auto value =
           parameters[n * parent + k] + random * stepsize * (b - a);
       // Make sure the new parameters fulfill the box constraints.
-      parameters[n * offspring + k] = clamp(value, a, b);
+      // parameters[n * offspring + k] = clamp(value, a, b);
+      parameters[n * offspring + k] = value;
     }
   }
 
@@ -284,26 +315,33 @@ class optimizer {
       const auto offspring2 = permutation[i + 1];
 
       simulated_binary_crossover(parent1, parent2, offspring1, offspring2, rng);
-
-      problem.evaluate(
-          span{&parameters[n * offspring1], &parameters[n * (offspring1 + 1)]},
-          span{&objectives[m * offspring1], &objectives[m * (offspring1 + 1)]});
-
-      problem.evaluate(
-          span{&parameters[n * offspring2], &parameters[n * (offspring2 + 1)]},
-          span{&objectives[m * offspring2], &objectives[m * (offspring2 + 1)]});
+      // crossover(n, &parameters[n * parent1], &parameters[n * parent2],
+      //           &parameters[n * offspring1], &parameters[n * offspring2],
+      //           rng);
+      clamp(offspring1);
+      clamp(offspring2);
+      evaluate(offspring1);
+      evaluate(offspring2);
     }
+
+    // for (; i < crossover_count; ++i) {
+    //   const auto parent1 = permutation[random()];
+    //   const auto parent2 = permutation[random()];
+    //   const auto offspring = permutation[i];
+    //   crossover(
+    //       span{&parameters[n * offspring], &parameters[n * (offspring + 1)]},
+    //       &parameters[n * parent1], &parameters[n * parent2], rng);
+    //   clamp(offspring);
+    //   evaluate(offspring);
+    // }
 
     for (; i < count; ++i) {
       const auto parent = permutation[random()];
       const auto offspring = permutation[i];
 
       alternate_random_mutation(parent, offspring, rng);
-
-      // Evaluate the objectives of the new point.
-      problem.evaluate(
-          span{&parameters[n * offspring], &parameters[n * (offspring + 1)]},
-          span{&objectives[m * offspring], &objectives[m * (offspring + 1)]});
+      clamp(offspring);
+      evaluate(offspring);
     }
   }
 
@@ -344,6 +382,8 @@ class optimizer {
   // private:
   problem_type problem{};
 
+  // crossoverer crossover{};
+
   std::vector<real> parameters{};
   std::vector<real> objectives{};
   std::vector<size_type> permutation{};
@@ -355,6 +395,19 @@ class optimizer {
   size_type select{};
   real crossover_probability = 0.3;
 };
+
+template <generic::problem problem_type>
+optimizer(problem_type, typename optimizer<problem_type>::size_type)
+    -> optimizer<problem_type>;
+
+// auto optimization(generic::problem auto problem,
+//                   optimizer<decltype(problem)>::size_type samples,
+//                   optimizer<decltype(problem)>::size_type iterations,
+//                   generic::random_number_generator auto&& rng) {
+//   optimizer result(problem);
+//   result.optimize(samples, std::forward<decltype(rng)>(rng));
+//   return result;
+// }
 
 }  // namespace nsga2
 

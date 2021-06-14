@@ -1,6 +1,7 @@
 #pragma once
 #include <concepts>
 #include <functional>
+#include <iterator>
 #include <ranges>
 //
 #include <lyrahgames/xstd/forward.hpp>
@@ -32,6 +33,16 @@ concept optimizer = true;
 template <typename T, typename real>
 concept range = (std::ranges::random_access_range<T> &&
                  std::same_as<real, std::ranges::range_value_t<T>>);
+
+template <typename T, typename U>
+concept input_iterator =
+    std::input_iterator<T> && identical<U, std::iter_value_t<T>>;
+
+template <typename T, typename U>
+concept output_iterator = std::output_iterator<T, U>;
+
+template <typename T, typename U>
+concept output_range = std::ranges::output_range<T, U>;
 
 template <typename T>
 concept frontier = true;
