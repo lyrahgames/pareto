@@ -1,3 +1,4 @@
 ./: exe{kursawe}: cxx{kursawe} ../ixx{kursawe_plot} $libs
-./: exe{zdt3}: cxx{zdt3} $libs
-./: exe{viennet}: cxx{viennet} $libs
+./: exe{zdt3}: cxx{zdt3} ../ixx{zdt3_plot} $libs
+./: exe{viennet}: cxx{viennet} ../ixx{viennet_plot} $libs
+./: exe{pawellek}: cxx{pawellek} ../ixx{pawellek_plot} $libs
