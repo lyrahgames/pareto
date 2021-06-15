@@ -63,11 +63,11 @@ class optimizer {
       bool non_dominated = true;
       for (auto it = begin(pareto_optima); it != end(pareto_optima);) {
         const auto& [p, _] = *it;
-        if (domination(p, y)) {
+        if (dominates(p, y)) {
           non_dominated = false;
           break;
         }
-        if (domination(y, p))
+        if (dominates(y, p))
           it = pareto_optima.erase(it);
         else
           ++it;

@@ -155,7 +155,7 @@ class optimizer {
 
           // If the current point is dominated by the assumed Pareto point then
           // put it at the front of the permutation.
-          if (domination(q, p)) {
+          if (dominates(q, p)) {
             non_dominated = false;
             permutation[front] = index;
             ++front;
@@ -164,7 +164,7 @@ class optimizer {
 
           // If it dominates other assumed Pareto points then remove the assumed
           // Pareto point and put its index at the front of the permutation.
-          if (domination(p, q)) {
+          if (dominates(p, q)) {
             it = pareto_indices.erase(it);
             permutation[front] = j;
             ++front;
@@ -353,6 +353,8 @@ class optimizer {
     }
   }
 
+  /// This function can be applied multiple times to further improve the
+  /// estimation of the Pareto frontier.
   void optimize(generic::random_number_generator auto&& rng,
                 size_t iterations) {
     for (size_t i = 0; i < iterations; ++i) {
