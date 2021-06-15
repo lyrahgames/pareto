@@ -22,7 +22,7 @@ int main() {
   // Choose problem, estimate the Pareto frontier, and cast it to a usable
   // output format in one step.
   const auto pareto_front =
-      naive::optimization<frontier<real>>(gallery::viennet<real>, 10'000, rng);
+      naive::optimization<frontier<real>>(gallery::viennet<real>, rng, 10'000);
 
 // Plot the data.
 #include "../viennet_plot.ipp"

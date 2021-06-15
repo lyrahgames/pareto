@@ -22,7 +22,7 @@ int main() {
   // Choose problem, estimate the Pareto frontier, and cast it to a usable
   // output format in one step.
   const auto pareto_front =
-      naive::optimization<frontier<real>>(gallery::zdt3<real>, 10'000'000, rng);
+      naive::optimization<frontier<real>>(gallery::zdt3<real>, rng, 10'000'000);
 
 // Plot the data.
 #include "../zdt3_plot.ipp"

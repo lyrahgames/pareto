@@ -32,7 +32,8 @@ class optimizer {
   optimizer() = default;
   explicit optimizer(problem_type p) : problem(p) {}
 
-  void optimize(size_t samples, generic::random_number_generator auto&& rng) {
+  void optimize(generic::random_number_generator auto&& rng,
+                size_t iterations = 1000) {
     using namespace std;
 
     // Generate oracle for random numbers.
@@ -46,7 +47,7 @@ class optimizer {
     objective_vector y(m);
 
     // Use naive Monte-Carlo approach to estimate Pareto front.
-    for (size_t s = 0; s < samples; ++s) {
+    for (size_t s = 0; s < iterations; ++s) {
       // Get random parameter vector inside box constaints.
       for (size_t k = 0; k < n; ++k) {
         // const auto random = uniform();
@@ -97,19 +98,19 @@ template <problem problem_type>
 optimizer(problem_type) -> optimizer<problem_type>;
 
 auto optimization(problem auto problem,
-                  size_t samples,
-                  generic::random_number_generator auto&& rng) {
+                  generic::random_number_generator auto&& rng,
+                  size_t iterations) {
   optimizer result(problem);
-  result.optimize(samples, std::forward<decltype(rng)>(rng));
+  result.optimize(std::forward<decltype(rng)>(rng), iterations);
   return result;
 }
 
 template <generic::frontier frontier_type>
 auto optimization(problem auto problem,
-                  size_t samples,
-                  generic::random_number_generator auto&& rng) {
+                  generic::random_number_generator auto&& rng,
+                  size_t iterations) {
   return frontier_cast<frontier_type>(
-      optimization(problem, samples, std::forward<decltype(rng)>(rng)));
+      optimization(problem, std::forward<decltype(rng)>(rng), iterations));
 }
 
 }  // namespace naive

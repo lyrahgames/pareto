@@ -26,7 +26,7 @@ int main() {
   // Choose problem, estimate the Pareto frontier, and cast it to a usable
   // output format in one step.
   const auto pareto_front = naive::optimization<frontier<real>>(
-      gallery::pawellek<real>, 10'000'000, rng);
+      gallery::pawellek<real>, rng, 10'000'000);
 
   const auto end = clock::now();
   const auto time = chrono::duration<double>(end - start).count();
