@@ -23,15 +23,10 @@ int main() {
   using clock = chrono::high_resolution_clock;
   const auto start = clock::now();
 
-  // Choose the problem from the gallery.
-  const auto problem = gallery::zdt3<real>;
-
-  // Estimate the pareto frontier by using the NSGA2 algorithm.
-  nsga2::optimizer optimizer(problem, 1000);
-  optimizer.optimize(1000, rng);
-
-  // Cast the estimated Pareto frontier to a usable output format.
-  const auto pareto_front = frontier_cast<frontier<real>>(optimizer);
+  // Choose problem, estimate the Pareto frontier, and cast it to a usable
+  // output format in one step.
+  const auto pareto_front = nsga2::optimization<frontier<real>>(
+      gallery::zdt3<real>, rng, {.iterations = 1000, .population = 1000});
 
   const auto end = clock::now();
   const auto time = chrono::duration<double>(end - start).count();

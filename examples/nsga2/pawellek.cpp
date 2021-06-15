@@ -29,8 +29,12 @@ int main() {
   const auto problem = gallery::pawellek<real>;
 
   // Estimate the pareto frontier by using the NSGA2 algorithm.
-  nsga2::optimizer optimizer(problem, 1000);
-  optimizer.optimize(1000, rng);
+  nsga2::optimizer optimizer(problem, rng,
+                             {.iterations = 100,
+                              .population = 1000,
+                              .kill_ratio = 0.2,
+                              .crossover_ratio = 0.1});
+  optimizer.optimize(rng);
 
   // Cast the estimated Pareto frontier to a usable output format.
   const auto pareto_front = frontier_cast<frontier<real>>(optimizer);

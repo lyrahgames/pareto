@@ -29,8 +29,10 @@ int main() {
   const auto problem = gallery::kursawe<real>;
 
   // Estimate the pareto frontier by using the NSGA2 algorithm.
-  nsga2::optimizer optimizer(problem, 1000);
-  optimizer.optimize(1000, rng);
+  nsga2::optimizer optimizer(
+      problem, rng,
+      {.population = 1000, .kill_ratio = 0.2, .crossover_ratio = 0.9});
+  optimizer.optimize(rng, 1000);
 
   // Cast the estimated Pareto frontier to a usable output format.
   const auto pareto_front = frontier_cast<frontier<real>>(optimizer);

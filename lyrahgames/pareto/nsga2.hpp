@@ -30,10 +30,24 @@ class optimizer {
   using problem_type = T;
   using real = typename problem_type::real;
 
+  struct configuration {
+    size_t iterations = 1000;
+    size_t population = 1000;
+    float kill_ratio = 0.5;
+    float crossover_ratio = 0.3;
+  };
+
   optimizer() = default;
-  explicit optimizer(problem_type p, size_t samples = 1000)
-      : problem(p), s(samples), select(samples / 2) {
+  explicit optimizer(problem_type p,
+                     generic::random_number_generator auto&& rng,
+                     configuration config = {})
+      : problem(p),
+        s(config.population),
+        select(std::floor((1 - config.kill_ratio) * config.population)),
+        iter(config.iterations),
+        crossover_probability(config.crossover_ratio) {
     init();
+    init_population(std::forward<decltype(rng)>(rng));
   }
 
   void init() {
@@ -85,14 +99,15 @@ class optimizer {
     // Iterate over all possible samples.
     for (size_t i = 0; i < s; ++i) {
       // Generate uniformly distributed parameter samples.
-      for (size_t j = 0; j < n; ++j) {
-        // const auto [a, b] = problem.box(j);
-        // parameters[n * i + j] = lerp(a, b, random());
+      for (size_t j = 0; j < n; ++j)
         parameters[n * i + j] =
-            lerp(problem.box_min(j), problem.box_max(i), random());
-      }
+            lerp(problem.box_min(j), problem.box_max(j), random());
       evaluate(i);
     }
+
+    // Pre-sort the randomly generated population.
+    non_dominated_sort();
+    crowding_distance_sort();
   }
 
   void non_dominated_sort() {
@@ -338,16 +353,17 @@ class optimizer {
     }
   }
 
-  void optimize(size_t iterations,
-                generic::random_number_generator auto&& rng) {
-    init_population(rng);
+  void optimize(generic::random_number_generator auto&& rng,
+                size_t iterations) {
     for (size_t i = 0; i < iterations; ++i) {
+      populate(rng);
       non_dominated_sort();
       crowding_distance_sort();
-      populate(rng);
     }
-    non_dominated_sort();
-    crowding_distance_sort();
+  }
+
+  void optimize(generic::random_number_generator auto&& rng) {
+    optimize(std::forward<decltype(rng)>(rng), iter);
   }
 
   template <generic::frontier frontier_type>
@@ -382,22 +398,32 @@ class optimizer {
   std::vector<size_t> fronts{};
   std::unordered_set<size_t> pareto_indices{};
 
-  size_t s{};
-  size_t select{};
-  real crossover_probability = 0.3;
+  size_t s;
+  size_t select;
+  size_t iter;
+  float crossover_probability;
 };
 
 template <problem problem_type>
 optimizer(problem_type, size_t) -> optimizer<problem_type>;
 
-// auto optimization(problem auto problem,
-//                   size_t samples,
-//                   size_t iterations,
-//                   generic::random_number_generator auto&& rng) {
-//   optimizer result(problem);
-//   result.optimize(samples, std::forward<decltype(rng)>(rng));
-//   return result;
-// }
+auto optimization(
+    problem auto problem,
+    generic::random_number_generator auto&& rng,
+    typename optimizer<decltype(problem)>::configuration config = {}) {
+  optimizer result(problem, rng, config);
+  result.optimize(std::forward<decltype(rng)>(rng));
+  return result;
+}
+
+template <generic::frontier frontier_type>
+auto optimization(
+    problem auto problem,
+    generic::random_number_generator auto&& rng,
+    typename optimizer<decltype(problem)>::configuration config = {}) {
+  return frontier_cast<frontier_type>(
+      optimization(problem, std::forward<decltype(rng)>(rng), config));
+}
 
 }  // namespace nsga2
 
