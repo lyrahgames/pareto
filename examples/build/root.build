@@ -3,7 +3,7 @@ using cxx
 
 hxx{*}: extension = hpp
 cxx{*}: extension = cpp
+ixx{*}: extension = ipp
 
 test.target = $cxx.target
 
-exe{*}: test = true

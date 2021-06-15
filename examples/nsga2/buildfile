@@ -1,0 +1,3 @@
+./: exe{kursawe}: cxx{kursawe} ../ixx{kursawe_plot} $libs
+./: exe{zdt3}: cxx{zdt3} $libs
+./: exe{viennet}: cxx{viennet} $libs

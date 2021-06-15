@@ -19,17 +19,11 @@ using real = float;
 int main() {
   mt19937 rng{random_device{}()};
 
+  // Choose problem, estimate the Pareto frontier, and cast it to a usable
+  // output format in one step.
   const auto pareto_front =
       naive::optimization<frontier<real>>(gallery::zdt3<real>, 10'000'000, rng);
 
-  fstream file{"zdt3.dat", ios::out};
-  for (size_t i = 0; i < pareto_front.sample_count(); ++i) {
-    for (auto y : pareto_front.objectives(i))
-      file << setw(20) << y << ' ';
-    file << '\n';
-  }
-  file << flush;
-
-  gnuplot_pipe yplot{};
-  yplot << "plot 'zdt3.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
+// Plot the data.
+#include "../zdt3_plot.ipp"
 }
