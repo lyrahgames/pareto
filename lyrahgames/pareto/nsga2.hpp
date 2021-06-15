@@ -19,15 +19,19 @@ namespace lyrahgames::pareto {
 
 namespace nsga2 {
 
-template <generic::problem T>
+template <typename T>
+concept problem = generic::evaluatable_problem<T,
+                                               std::span<typename T::real>,
+                                               std::span<typename T::real>>;
+
+template <problem T>
 class optimizer {
  public:
   using problem_type = T;
   using real = typename problem_type::real;
-  using size_type = size_t;
 
   optimizer() = default;
-  explicit optimizer(problem_type p, size_type samples = 1000)
+  explicit optimizer(problem_type p, size_t samples = 1000)
       : problem(p), s(samples), select(samples / 2) {
     init();
   }
@@ -44,10 +48,10 @@ class optimizer {
 
   /// Clamp the parameters referenced by the given index to the box constraints
   /// defined by the current problem.
-  void clamp(size_type index) {
+  void clamp(size_t index) {
     using std::clamp;
     const auto n = problem.parameter_count();
-    for (size_type i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       // const auto [a, b] = problem.box(i);
       const auto x = parameters[n * index + i];
       // parameters[n * index + i] = clamp(x, a, b);
@@ -58,7 +62,7 @@ class optimizer {
 
   /// Evaluate all objectives at the given index by using the parameters
   /// referenced by the given index.
-  void evaluate(size_type index) {
+  void evaluate(size_t index) {
     using std::span;
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
@@ -79,9 +83,9 @@ class optimizer {
     const auto random = [&] { return distribution(rng); };
 
     // Iterate over all possible samples.
-    for (size_type i = 0; i < s; ++i) {
+    for (size_t i = 0; i < s; ++i) {
       // Generate uniformly distributed parameter samples.
-      for (size_type j = 0; j < n; ++j) {
+      for (size_t j = 0; j < n; ++j) {
         // const auto [a, b] = problem.box(j);
         // parameters[n * i + j] = lerp(a, b, random());
         parameters[n * i + j] =
@@ -111,11 +115,11 @@ class optimizer {
       pareto_indices.insert(permutation[0]);
 
       // Marks the number of currently dominated points.
-      size_type front = 0;
+      size_t front = 0;
 
       // Already known pareto points have already been put at the end.
       // So iterate only over dominated points from the last iteration.
-      for (size_type i = 1; i < s - fronts.back(); ++i) {
+      for (size_t i = 1; i < s - fronts.back(); ++i) {
         // Reference the objectives of the current point with respect to the
         // permutation.
         const auto index = permutation[i];
@@ -160,7 +164,7 @@ class optimizer {
       // Order dominated points in reverse order. Heuristic to fasten up
       // sorting. Apart from performance, there is no logical reason to do this.
       // The algorithm would be able to work without it.
-      for (size_type i = 0; i < front / 2; ++i)
+      for (size_t i = 0; i < front / 2; ++i)
         swap(permutation[i], permutation[front - 1 - i]);
 
       // Put all Pareto points after the dominated points.
@@ -188,13 +192,13 @@ class optimizer {
     const auto count = fronts[fronts.size() - 1] - fronts[fronts.size() - 2];
 
     // Set used crowding distances to zero to able to accumulate afterwards.
-    // for (size_type i = offset; i < offset + count; ++i)
-    for (size_type i = 0; i < s; ++i)
+    // for (size_t i = offset; i < offset + count; ++i)
+    for (size_t i = 0; i < s; ++i)
       crowding_distances[i] = 0;
 
     // Compute the crowding distance for every point
     // by iterating over all objectives.
-    for (size_type v = 0; v < m; ++v) {
+    for (size_t v = 0; v < m; ++v) {
       // First, sort points based on their current objective value
       // to be able to easily compute neighboring distances.
       sort(&permutation[offset], &permutation[offset + count],
@@ -214,7 +218,7 @@ class optimizer {
                objectives[m * permutation[offset] + v]);
 
       // Accumulate scaled distances to neighbors.
-      for (size_type i = offset + 1; i < offset + count - 1; ++i)
+      for (size_t i = offset + 1; i < offset + count - 1; ++i)
         crowding_distances[permutation[i]] +=
             scale * (objectives[m * permutation[i + 1] + v] -
                      objectives[m * permutation[i - 1] + v]);
@@ -227,10 +231,10 @@ class optimizer {
          });
   }
 
-  void simulated_binary_crossover(size_type parent1,
-                                  size_type parent2,
-                                  size_type offspring1,
-                                  size_type offspring2,
+  void simulated_binary_crossover(size_t parent1,
+                                  size_t parent2,
+                                  size_t offspring1,
+                                  size_t offspring2,
                                   generic::random_number_generator auto&& rng) {
     using namespace std;
 
@@ -264,8 +268,8 @@ class optimizer {
     }
   }
 
-  void alternate_random_mutation(size_type parent,
-                                 size_type offspring,
+  void alternate_random_mutation(size_t parent,
+                                 size_t offspring,
                                  generic::random_number_generator auto&& rng) {
     using namespace std;
 
@@ -302,14 +306,14 @@ class optimizer {
 
     // Add oracle for random index.
     // All good points are stored at the end of the permutation.
-    uniform_int_distribution<size_type> distribution{s - select, s - 1};
+    uniform_int_distribution<size_t> distribution{s - select, s - 1};
     const auto random = [&] { return distribution(rng); };
 
-    const size_type count = s - select;
-    const size_type crossover_count =
-        2 * size_type(crossover_probability * (count / 2));
+    const size_t count = s - select;
+    const size_t crossover_count =
+        2 * size_t(crossover_probability * (count / 2));
 
-    size_type i = 0;
+    size_t i = 0;
 
     for (; i < crossover_count; i += 2) {
       const auto parent1 = permutation[random()];
@@ -334,10 +338,10 @@ class optimizer {
     }
   }
 
-  void optimize(size_type iterations,
+  void optimize(size_t iterations,
                 generic::random_number_generator auto&& rng) {
     init_population(rng);
-    for (size_type i = 0; i < iterations; ++i) {
+    for (size_t i = 0; i < iterations; ++i) {
       non_dominated_sort();
       crowding_distance_sort();
       populate(rng);
@@ -352,16 +356,16 @@ class optimizer {
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
     frontier_type frontier{fronts[1], n, m};
-    for (size_type i = 0; i < fronts[1]; ++i) {
+    for (size_t i = 0; i < fronts[1]; ++i) {
       const auto index = permutation[s - 1 - i];
       {
         auto it = frontier.parameters_iterator(i);
-        for (size_type j = 0; j < n; ++j, ++it)
+        for (size_t j = 0; j < n; ++j, ++it)
           *it = parameters[n * index + j];
       }
       {
         auto it = frontier.objectives_iterator(i);
-        for (size_type j = 0; j < m; ++j, ++it)
+        for (size_t j = 0; j < m; ++j, ++it)
           *it = objectives[m * index + j];
       }
     }
@@ -373,23 +377,22 @@ class optimizer {
 
   std::vector<real> parameters{};
   std::vector<real> objectives{};
-  std::vector<size_type> permutation{};
+  std::vector<size_t> permutation{};
   std::vector<real> crowding_distances{};
-  std::vector<size_type> fronts{};
-  std::unordered_set<size_type> pareto_indices{};
+  std::vector<size_t> fronts{};
+  std::unordered_set<size_t> pareto_indices{};
 
-  size_type s{};
-  size_type select{};
+  size_t s{};
+  size_t select{};
   real crossover_probability = 0.3;
 };
 
-template <generic::problem problem_type>
-optimizer(problem_type, typename optimizer<problem_type>::size_type)
-    -> optimizer<problem_type>;
+template <problem problem_type>
+optimizer(problem_type, size_t) -> optimizer<problem_type>;
 
-// auto optimization(generic::problem auto problem,
-//                   optimizer<decltype(problem)>::size_type samples,
-//                   optimizer<decltype(problem)>::size_type iterations,
+// auto optimization(problem auto problem,
+//                   size_t samples,
+//                   size_t iterations,
 //                   generic::random_number_generator auto&& rng) {
 //   optimizer result(problem);
 //   result.optimize(samples, std::forward<decltype(rng)>(rng));

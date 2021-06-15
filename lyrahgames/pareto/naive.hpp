@@ -14,7 +14,12 @@ namespace lyrahgames::pareto {
 
 namespace naive {
 
-template <generic::problem T>
+template <typename T>
+concept problem = generic::evaluatable_problem<T,
+                                               std::vector<typename T::real>,
+                                               std::vector<typename T::real>>;
+
+template <problem T>
 class optimizer {
  public:
   using problem_type = T;
@@ -87,10 +92,10 @@ class optimizer {
   container pareto_optima{};
 };
 
-template <generic::problem problem_type>
+template <problem problem_type>
 optimizer(problem_type) -> optimizer<problem_type>;
 
-auto optimization(generic::problem auto problem,
+auto optimization(problem auto problem,
                   size_t samples,
                   generic::random_number_generator auto&& rng) {
   optimizer result(problem);
@@ -99,7 +104,7 @@ auto optimization(generic::problem auto problem,
 }
 
 template <generic::frontier frontier_type>
-auto optimization(generic::problem auto problem,
+auto optimization(problem auto problem,
                   size_t samples,
                   generic::random_number_generator auto&& rng) {
   return frontier_cast<frontier_type>(

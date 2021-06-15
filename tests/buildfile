@@ -1,23 +1,3 @@
 import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
-import libs += lyrahgames-xstd%lib{lyrahgames-xstd}
-import libs += lyrahgames-gnuplot-pipe%lib{lyrahgames-gnuplot-pipe}
-
-# ./: exe{viennet}: cxx{viennet} $libs
-
-# ./: exe{main}: cxx{main} hxx{gpp} $libs
-# ./: exe{kursawe_nsga2}: cxx{kursawe_nsga2} hxx{**} $libs
-# ./: exe{nsga2}: cxx{nsga2} hxx{**} $libs
-# ./: exe{kursawe_naive}: cxx{kursawe_naive} hxx{**} $libs
-# ./: exe{viennet_naive}: cxx{viennet_naive} hxx{**} $libs
-# ./: exe{surface_naive}: cxx{surface_naive} hxx{**} $libs
-
-# ./: exe{constraints}: cxx{constraints} hxx{**} $libs
-# ./: exe{nsga2_constrained}: cxx{nsga2_constrained} hxx{**} $libs
-
-# ./: exe{ranges_test}: cxx{ranges_test} hxx{**} $libs
-
-# ./: exe{interface_test}: cxx{interface_test} hxx{**} $libs
-
 ./: basics/
-
 ./: exe{version}: cxx{version} $libs
