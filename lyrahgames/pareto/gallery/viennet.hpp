@@ -15,7 +15,8 @@ struct viennet_problem {
   static constexpr size_t parameter_count() { return 2; }
   static constexpr size_t objective_count() { return 3; }
 
-  static constexpr auto box(size_t i) { return std::pair<real, real>{-3, 3}; }
+  static constexpr real box_min(size_t index) { return -3; }
+  static constexpr real box_max(size_t index) { return 3; }
 
   void evaluate(const generic::range<real> auto& x,
                 generic::range<real> auto&& y) {

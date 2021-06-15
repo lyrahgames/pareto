@@ -24,7 +24,8 @@ concept problem = real<typename T::real> &&
     requires(T& p, size_t i, T::real& a, T::real& b) {
   { p.parameter_count() } -> identical<size_t>;
   { p.objective_count() } -> identical<size_t>;
-  std::tie(a, b) = p.box(i);
+  { p.box_min(i) } -> identical<typename T::real>;
+  { p.box_max(i) } -> identical<typename T::real>;
 };
 
 template <typename T>

@@ -48,9 +48,11 @@ class optimizer {
     using std::clamp;
     const auto n = problem.parameter_count();
     for (size_type i = 0; i < n; ++i) {
-      const auto [a, b] = problem.box(i);
+      // const auto [a, b] = problem.box(i);
       const auto x = parameters[n * index + i];
-      parameters[n * index + i] = clamp(x, a, b);
+      // parameters[n * index + i] = clamp(x, a, b);
+      parameters[n * index + i] =
+          clamp(x, problem.box_min(i), problem.box_max(i));
     }
   }
 
@@ -80,8 +82,10 @@ class optimizer {
     for (size_type i = 0; i < s; ++i) {
       // Generate uniformly distributed parameter samples.
       for (size_type j = 0; j < n; ++j) {
-        const auto [a, b] = problem.box(j);
-        parameters[n * i + j] = lerp(a, b, random());
+        // const auto [a, b] = problem.box(j);
+        // parameters[n * i + j] = lerp(a, b, random());
+        parameters[n * i + j] =
+            lerp(problem.box_min(j), problem.box_max(i), random());
       }
       evaluate(i);
     }
@@ -278,7 +282,9 @@ class optimizer {
     // For all parameters of the parent, draw new parameters.
     for (size_t k = 0; k < n; ++k) {
       const auto random = uniform();
-      const auto [a, b] = problem.box(k);
+      // const auto [a, b] = problem.box(k);
+      const auto a = problem.box_min(k);
+      const auto b = problem.box_max(k);
       const auto value =
           parameters[n * parent + k] + random * stepsize * (b - a);
       // Make sure the new parameters fulfill the box constraints.

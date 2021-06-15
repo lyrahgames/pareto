@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cmath>
 #include <concepts>
 #include <map>
 #include <ranges>
@@ -28,8 +29,9 @@ class optimizer {
   void optimize(size_t samples, generic::random_number_generator auto&& rng) {
     using namespace std;
 
+    // Generate oracle for random numbers.
     uniform_real_distribution<real> distribution{0, 1};
-    const auto uniform = [&] { return distribution(rng); };
+    const auto random = [&] { return distribution(rng); };
 
     const auto n = problem.parameter_count();
     const auto m = problem.objective_count();
@@ -41,9 +43,10 @@ class optimizer {
     for (size_t s = 0; s < samples; ++s) {
       // Get random parameter vector inside box constaints.
       for (size_t k = 0; k < n; ++k) {
-        const auto random = uniform();
-        const auto [a, b] = problem.box(k);
-        x[k] = random * a + (1 - random) * b;
+        // const auto random = uniform();
+        // const auto [a, b] = problem.box(k);
+        // x[k] = random * a + (1 - random) * b;
+        x[k] = lerp(problem.box_min(k), problem.box_max(k), random());
       }
 
       // Evaluate its objective values.
