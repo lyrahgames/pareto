@@ -14,7 +14,6 @@
 #include <lyrahgames/pareto/domination.hpp>
 #include <lyrahgames/pareto/frontier_cast.hpp>
 #include <lyrahgames/pareto/meta.hpp>
-// #include <lyrahgames/pareto/simulated_binary_crossover.hpp>
 
 namespace lyrahgames::pareto {
 
@@ -26,8 +25,6 @@ class optimizer {
   using problem_type = T;
   using real = typename problem_type::real;
   using size_type = size_t;
-
-  // using crossoverer = struct simulated_binary_crossover<real>;
 
   optimizer() = default;
   explicit optimizer(problem_type p, size_type samples = 1000)
@@ -315,25 +312,11 @@ class optimizer {
       const auto offspring2 = permutation[i + 1];
 
       simulated_binary_crossover(parent1, parent2, offspring1, offspring2, rng);
-      // crossover(n, &parameters[n * parent1], &parameters[n * parent2],
-      //           &parameters[n * offspring1], &parameters[n * offspring2],
-      //           rng);
       clamp(offspring1);
       clamp(offspring2);
       evaluate(offspring1);
       evaluate(offspring2);
     }
-
-    // for (; i < crossover_count; ++i) {
-    //   const auto parent1 = permutation[random()];
-    //   const auto parent2 = permutation[random()];
-    //   const auto offspring = permutation[i];
-    //   crossover(
-    //       span{&parameters[n * offspring], &parameters[n * (offspring + 1)]},
-    //       &parameters[n * parent1], &parameters[n * parent2], rng);
-    //   clamp(offspring);
-    //   evaluate(offspring);
-    // }
 
     for (; i < count; ++i) {
       const auto parent = permutation[random()];
@@ -379,10 +362,8 @@ class optimizer {
     return frontier;
   }
 
-  // private:
+ private:
   problem_type problem{};
-
-  // crossoverer crossover{};
 
   std::vector<real> parameters{};
   std::vector<real> objectives{};

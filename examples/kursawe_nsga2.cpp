@@ -23,8 +23,8 @@ int main() {
   // const size_t s = 1000;
   // const size_t n = 3;
   // const size_t m = 2;
-  nsga2::optimizer optimizer(gallery::kursawe<real>, 100);
-  optimizer.optimize(100, rng);
+  nsga2::optimizer optimizer(gallery::kursawe<real>, 1000);
+  optimizer.optimize(1000, rng);
   const auto pareto_front = frontier_cast<frontier<real>>(optimizer);
 
   // fstream file{"kursawe_nsga2.dat", ios::out};

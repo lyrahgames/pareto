@@ -16,6 +16,8 @@ import libs += lyrahgames-gnuplot-pipe%lib{lyrahgames-gnuplot-pipe}
 
 # ./: exe{ranges_test}: cxx{ranges_test} hxx{**} $libs
 
-./: exe{interface_test}: cxx{interface_test} hxx{**} $libs
+# ./: exe{interface_test}: cxx{interface_test} hxx{**} $libs
 
 ./: basics/
+
+./: exe{version}: cxx{version} $libs
