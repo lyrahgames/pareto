@@ -37,6 +37,7 @@ concept output_iterator = std::output_iterator<T, U>;
 template <typename T, typename U>
 concept output_range = std::ranges::output_range<T, U>;
 
+/// Basic Concept for General Pareto Problems
 template <typename T>
 concept problem = real<typename T::real> &&
     requires(T& p, size_t i, T::real& a, T::real& b) {
@@ -46,12 +47,14 @@ concept problem = real<typename T::real> &&
   { p.box_max(i) } -> identical<typename T::real>;
 };
 
+/// General Pareto Problems Evaluatable on a Given Range Type
 template <typename T, typename X, typename Y>
 concept evaluatable_problem = problem<T> &&
     requires(T& problem, const X& x, Y&& y) {
   problem.evaluate(x, std::forward<Y>(y));
 };
 
+/// Concept for General Pareto Frontiers
 template <typename T>
 concept frontier = real<typename T::real> && requires(T& v,
                                                       const T& c,
@@ -76,11 +79,14 @@ concept frontier = real<typename T::real> && requires(T& v,
   { c.objectives_iterator(index) } -> input_iterator<typename T::real>;
 };
 
+/// Defines that a given type provides a member function template
+/// 'frontier_cast' and therefore is castable to the given frontier.
 template <typename T, typename U>
 concept frontier_castable = requires(T& t) {
   { t.template frontier_cast<U>() } -> identical<U>;
 };
 
+/// Idea of Concept of General Optimizers
 template <typename T>
 concept optimizer = problem<typename T::problem_type>;
 

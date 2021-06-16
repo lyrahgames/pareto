@@ -6,6 +6,8 @@
 
 namespace lyrahgames::pareto {
 
+/// Evaluates if the point given by the range 'x' Pareto-dominates the point
+/// given by the range 'y'. Pareto domination does not define a total order.
 template <std::ranges::input_range T, std::ranges::input_range U>
 inline bool dominates(const T& x, const U& y) noexcept  //
     requires(std::totally_ordered_with<std::ranges::range_value_t<T>,

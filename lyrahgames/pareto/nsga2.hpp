@@ -19,17 +19,24 @@ namespace lyrahgames::pareto {
 
 namespace nsga2 {
 
+/// Specialized Pareto Problems for the NSGA2 Algorithm
 template <typename T>
 concept problem = generic::evaluatable_problem<T,
                                                std::span<typename T::real>,
                                                std::span<typename T::real>>;
 
+/// NSGA2 Optimization Algorithm with Custom Implementation of the Non-Dominated
+/// Sorting Algorithm, Simulated Binary Crossovers, and Alternate Random
+/// Mutations
 template <problem T>
 class optimizer {
  public:
   using problem_type = T;
   using real = typename problem_type::real;
 
+  /// Structure to provide easy intialization of the parameters of the
+  /// algorithm. By using designated initializers, named function arguments can
+  /// be simulated.
   struct configuration {
     size_t iterations = 1000;
     size_t population = 1000;
@@ -85,6 +92,7 @@ class optimizer {
         span{&objectives[m * index], &objectives[m * (index + 1)]});
   }
 
+  /// Generates a random population to start with the optimization algorithm.
   void init_population(generic::random_number_generator auto&& rng) {
     using namespace std;
 
@@ -110,6 +118,7 @@ class optimizer {
     crowding_distance_sort();
   }
 
+  /// Sort the current population into their layers of domination.
   void non_dominated_sort() {
     using namespace std;
 
@@ -192,6 +201,8 @@ class optimizer {
     }
   }
 
+  /// Sort a specific domination layer of the current population with respect to
+  /// their crowding distance by computing it first.
   void crowding_distance_sort() {
     using namespace std;
 
@@ -246,6 +257,7 @@ class optimizer {
          });
   }
 
+  /// Crossover Scheme
   void simulated_binary_crossover(size_t parent1,
                                   size_t parent2,
                                   size_t offspring1,
@@ -276,13 +288,10 @@ class optimizer {
 
       parameters[n * offspring1 + i] = tmp1;
       parameters[n * offspring2 + i] = tmp2;
-
-      // const auto [a, b] = problem.box(i);
-      // parameters[n * offspring1 + i] = clamp(tmp1, a, b);
-      // parameters[n * offspring2 + i] = clamp(tmp2, a, b);
     }
   }
 
+  /// Mutation Scheme
   void alternate_random_mutation(size_t parent,
                                  size_t offspring,
                                  generic::random_number_generator auto&& rng) {
@@ -301,17 +310,16 @@ class optimizer {
     // For all parameters of the parent, draw new parameters.
     for (size_t k = 0; k < n; ++k) {
       const auto random = uniform();
-      // const auto [a, b] = problem.box(k);
       const auto a = problem.box_min(k);
       const auto b = problem.box_max(k);
       const auto value =
           parameters[n * parent + k] + random * stepsize * (b - a);
-      // Make sure the new parameters fulfill the box constraints.
-      // parameters[n * offspring + k] = clamp(value, a, b);
       parameters[n * offspring + k] = value;
     }
   }
 
+  /// Discards the bad part of the population and fills it up again by using
+  /// crossovers and mutations.
   void populate(generic::random_number_generator auto&& rng) {
     using namespace std;
 
@@ -324,12 +332,14 @@ class optimizer {
     uniform_int_distribution<size_t> distribution{s - select, s - 1};
     const auto random = [&] { return distribution(rng); };
 
+    // Compute count of crossovers.
     const size_t count = s - select;
     const size_t crossover_count =
         2 * size_t(crossover_probability * (count / 2));
 
     size_t i = 0;
 
+    // Crossover
     for (; i < crossover_count; i += 2) {
       const auto parent1 = permutation[random()];
       const auto parent2 = permutation[random()];
@@ -337,17 +347,20 @@ class optimizer {
       const auto offspring2 = permutation[i + 1];
 
       simulated_binary_crossover(parent1, parent2, offspring1, offspring2, rng);
+      // Make sure newly generated parameters fulfill the box constraints.
       clamp(offspring1);
       clamp(offspring2);
       evaluate(offspring1);
       evaluate(offspring2);
     }
 
+    // Mutation
     for (; i < count; ++i) {
       const auto parent = permutation[random()];
       const auto offspring = permutation[i];
 
       alternate_random_mutation(parent, offspring, rng);
+      // Make sure newly generated parameters fulfill the box constraints.
       clamp(offspring);
       evaluate(offspring);
     }
@@ -364,10 +377,13 @@ class optimizer {
     }
   }
 
+  /// Uses the iterations count given by construction.
   void optimize(generic::random_number_generator auto&& rng) {
     optimize(std::forward<decltype(rng)>(rng), iter);
   }
 
+  /// Casts the estimated Pareto points stored as an implementation detail into
+  /// a usable frontier data structure.
   template <generic::frontier frontier_type>
   auto frontier_cast() const {
     using namespace std;
@@ -400,15 +416,21 @@ class optimizer {
   std::vector<size_t> fronts{};
   std::unordered_set<size_t> pareto_indices{};
 
+  /// Population Size
   size_t s;
+  /// Number of samples kept alive after one iteration.
   size_t select;
+  /// Number of iterations given by initialization.
   size_t iter;
+  /// Crossover/Mutation Ratio per Iteration
   float crossover_probability;
 };
 
 template <problem problem_type>
 optimizer(problem_type, size_t) -> optimizer<problem_type>;
 
+/// Short-hand function to set the parameters and optimize in one step. This
+/// function returns an instance to the NSGA2 optimizer.
 auto optimization(
     problem auto problem,
     generic::random_number_generator auto&& rng,
@@ -418,6 +440,8 @@ auto optimization(
   return result;
 }
 
+/// Short-hand function overload to additionally make a frontier cast after
+/// optimization and discard the optimizer instance in one step.
 template <generic::frontier frontier_type>
 auto optimization(
     problem auto problem,
