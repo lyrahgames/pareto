@@ -213,13 +213,13 @@ class optimizer {
     // is required.
     if (fronts.back() == select) return;
 
-    // Compute offset and count for the last front to only sort the last front.
-    const auto offset = s - fronts[fronts.size() - 1];
-    const auto count = fronts[fronts.size() - 1] - fronts[fronts.size() - 2];
+    // Compute range for the last front to only sort the last front.
+    const auto first = s - fronts[fronts.size() - 1];
+    const auto last = s - fronts[fronts.size() - 2];
 
     // Set used crowding distances to zero to able to accumulate afterwards.
     // for (size_t i = offset; i < offset + count; ++i)
-    for (size_t i = 0; i < s; ++i)
+    for (size_t i = first; i < last; ++i)
       crowding_distances[i] = 0;
 
     // Compute the crowding distance for every point
@@ -227,34 +227,31 @@ class optimizer {
     for (size_t v = 0; v < m; ++v) {
       // First, sort points based on their current objective value
       // to be able to easily compute neighboring distances.
-      sort(&permutation[offset], &permutation[offset + count],
-           [&](auto x, auto y) {
-             return objectives[m * x + v] < objectives[m * y + v];
-           });
+      sort(&permutation[first], &permutation[last], [&](auto x, auto y) {
+        return objectives[m * x + v] < objectives[m * y + v];
+      });
 
       // Points at the boundary are always important and should never be
       // discarded. Set their distance to infinity.
       constexpr auto inf = numeric_limits<real>::infinity();
-      crowding_distances[permutation[offset]] = inf;
-      crowding_distances[permutation[offset + count - 1]] = inf;
+      crowding_distances[permutation[first]] = inf;
+      crowding_distances[permutation[last - 1]] = inf;
 
       // Compute the scaling factor of the current objective for all points.
-      const auto scale =
-          1 / (objectives[m * permutation[offset + count - 1] + v] -
-               objectives[m * permutation[offset] + v]);
+      const auto scale = 1 / (objectives[m * permutation[last - 1] + v] -
+                              objectives[m * permutation[first] + v]);
 
       // Accumulate scaled distances to neighbors.
-      for (size_t i = offset + 1; i < offset + count - 1; ++i)
+      for (size_t i = first + 1; i < last - 1; ++i)
         crowding_distances[permutation[i]] +=
             scale * (objectives[m * permutation[i + 1] + v] -
                      objectives[m * permutation[i - 1] + v]);
     }
 
     // Sort the respective points based on their computed crowding distance.
-    sort(&permutation[offset], &permutation[offset + count],
-         [&](auto x, auto y) {
-           return crowding_distances[x] < crowding_distances[y];
-         });
+    sort(&permutation[first], &permutation[last], [&](auto x, auto y) {
+      return crowding_distances[x] < crowding_distances[y];
+    });
   }
 
   /// Crossover Scheme
