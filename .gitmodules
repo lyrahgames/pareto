@@ -1,0 +1,6 @@
+[submodule ".githooks/good-commit-msg"]
+	path = .githooks/good-commit-msg
+	url = https://github.com/lyrahgames/git-good-commit-msg.git
+[submodule ".githooks/clang-format-check"]
+	path = .githooks/clang-format-check
+	url = https://github.com/lyrahgames/git-clang-format-check.git

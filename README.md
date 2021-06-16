@@ -190,7 +190,14 @@ int main() {
 }
 ```
 
-## Build, Test, and Install
+## Clone, Build, and Test
+
+    git clone --recurse-submodules https://github.com/lyrahgames/pareto.git lyrahgames-pareto
+    cd lyrahgames-pareto
+    bdep init -C @gcc cc config.cxx=g++ \
+        config.cxx.poptions=-DNDEBUG \
+        config.cxx.coptions="-O3 -march=native"
+    b test
 
 ## Usage with build2
 Add this repository to the `repositories.manifest` file of your build2 package.
