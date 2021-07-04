@@ -2,3 +2,48 @@ import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
 import libs += lyrahgames-gnuplot%lib{lyrahgames-gnuplot}
 
 ./: {*/ -build/}
+
+# Kursawe
+./: exe{kursawe-naive-optimization}: obj{kursawe-naive-optimization}
+obj{kursawe-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::kursawe<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{kursawe-nsga2-optimization}: obj{kursawe-nsga2-optimization}
+obj{kursawe-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::kursawe<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
+# ZDT3
+./: exe{zdt3-naive-optimization}: obj{zdt3-naive-optimization}
+obj{zdt3-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt3<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{zdt3-nsga2-optimization}: obj{zdt3-nsga2-optimization}
+obj{zdt3-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt3<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
+# Fonseca-Fleming
+./: exe{fonseca-fleming-naive-optimization}: obj{fonseca-fleming-naive-optimization}
+obj{fonseca-fleming-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::fonseca_fleming<real>{10}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{fonseca-fleming-nsga2-optimization}: obj{fonseca-fleming-nsga2-optimization}
+obj{fonseca-fleming-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::fonseca_fleming<real>{10}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
