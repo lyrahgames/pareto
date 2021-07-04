@@ -1,6 +1,6 @@
 : 1
 name: lyrahgames-pareto
-version: 0.1.1-a.0.z
+version: 0.1.1
 project: lyrahgames
 summary: Header-Only C++ Library for the Estimation of N-Dimensional Pareto Frontiers
 license: GPL-3.0-or-later ; GNU General Public License v3.0 or later
