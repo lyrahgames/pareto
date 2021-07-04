@@ -15,11 +15,14 @@ namespace lyrahgames::pareto {
 
 namespace nsga2 {
 // currently only for static arrays
-template <generic::vector_field field, generic::vector_field constraints,
+template <generic::vector_field field,
+          generic::vector_field constraints,
           typename RNG>
 auto constrained_optimization(field f,
                               const aabb<meta::argument<field, 0>>& box,
-                              constraints c, RNG&& rng, size_t iterations) {
+                              constraints c,
+                              RNG&& rng,
+                              size_t iterations) {
   using namespace std;
 
   using result_type = meta::result<field>;
@@ -153,7 +156,8 @@ auto constrained_optimization(field f,
   };
 
   const auto assign_crowding_distances = [&]() {
-    for (size_t i = 0; i < n; ++i) crowding_distances[i] = 0;
+    for (size_t i = 0; i < n; ++i)
+      crowding_distances[i] = 0;
     for (auto& front : fronts) {
       if (front.empty()) break;
       for (size_t v = 0; v < size(values[0]); ++v) {

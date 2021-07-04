@@ -70,7 +70,8 @@ int main() {
        << "\n";
 
   fstream pareto_file{"pareto.dat", ios::out};
-  for (auto& p : pareto_front) pareto_file << p[0] << '\t' << p[1] << '\n';
+  for (auto& p : pareto_front)
+    pareto_file << p[0] << '\t' << p[1] << '\n';
   pareto_file << flush;
 
   gpp plot{};
