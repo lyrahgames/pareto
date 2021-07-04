@@ -18,6 +18,36 @@ obj{kursawe-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
   cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
 }
 
+# ZDT1
+./: exe{zdt1-naive-optimization}: obj{zdt1-naive-optimization}
+obj{zdt1-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt1<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{zdt1-nsga2-optimization}: obj{zdt1-nsga2-optimization}
+obj{zdt1-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt1<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
+# ZDT2
+./: exe{zdt2-naive-optimization}: obj{zdt2-naive-optimization}
+obj{zdt2-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{zdt2-nsga2-optimization}: obj{zdt2-nsga2-optimization}
+obj{zdt2-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
 # ZDT3
 ./: exe{zdt3-naive-optimization}: obj{zdt3-naive-optimization}
 obj{zdt3-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
@@ -30,6 +60,36 @@ obj{zdt3-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
 obj{zdt3-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
 {
   cxx.poptions += '-DPROBLEM=pareto::gallery::zdt3<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
+# ZDT4
+./: exe{zdt4-naive-optimization}: obj{zdt4-naive-optimization}
+obj{zdt4-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt4<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{zdt4-nsga2-optimization}: obj{zdt4-nsga2-optimization}
+obj{zdt4-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt4<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
+
+# ZDT6
+./: exe{zdt6-naive-optimization}: obj{zdt6-naive-optimization}
+obj{zdt6-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt6<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+}
+
+./: exe{zdt6-nsga2-optimization}: obj{zdt6-nsga2-optimization}
+obj{zdt6-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt6<real>'
   cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
 }
 
