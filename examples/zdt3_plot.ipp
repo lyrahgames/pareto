@@ -8,5 +8,5 @@ for (size_t i = 0; i < pareto_front.sample_count(); ++i) {
 file << flush;
 
 // Plot the data.
-gnuplot_pipe yplot{};
-yplot << "plot 'zdt3.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";
+gnuplot::pipe plot{};
+plot << "plot 'zdt3.dat' u 1:2 w p lt rgb '#ff3333' pt 13\n";

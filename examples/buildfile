@@ -1,4 +1,4 @@
 import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
-import libs += lyrahgames-gnuplot-pipe%lib{lyrahgames-gnuplot-pipe}
+import libs += lyrahgames-gnuplot%lib{lyrahgames-gnuplot}
 
 ./: {*/ -build/}

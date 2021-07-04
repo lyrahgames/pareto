@@ -12,4 +12,4 @@ location: https://github.com/lyrahgames/xstd.git
 
 :
 role: prerequisite
-location: https://github.com/lyrahgames/gnuplot-pipe.git
+location: https://github.com/lyrahgames/gnuplot.git

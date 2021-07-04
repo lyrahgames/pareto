@@ -4,7 +4,7 @@
 #include <iostream>
 #include <random>
 //
-#include <lyrahgames/gnuplot_pipe.hpp>
+#include <lyrahgames/gnuplot/gnuplot.hpp>
 //
 #include <lyrahgames/pareto/frontier.hpp>
 #include <lyrahgames/pareto/naive.hpp>

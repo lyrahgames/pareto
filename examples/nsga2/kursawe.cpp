@@ -6,7 +6,7 @@
 //
 #include <lyrahgames/xstd/chrono.hpp>
 //
-#include <lyrahgames/gnuplot_pipe.hpp>
+#include <lyrahgames/gnuplot/gnuplot.hpp>
 //
 #include <lyrahgames/pareto/frontier.hpp>
 #include <lyrahgames/pareto/nsga2.hpp>
