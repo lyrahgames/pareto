@@ -1,0 +1,46 @@
+#pragma once
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <ranges>
+#include <stdexcept>
+//
+#include <lyrahgames/pareto/meta.hpp>
+
+namespace lyrahgames::pareto::gallery {
+
+template <std::floating_point T>
+struct schaffer1_problem {
+  using real = T;
+
+  static constexpr size_t parameter_count() { return 1; }
+  static constexpr size_t objective_count() { return 2; }
+
+  real box_min(size_t index) const { return -a; }
+  real box_max(size_t index) const { return a; }
+
+  schaffer1_problem() = default;
+  schaffer1_problem(real aa) : a{aa} {
+    if (a < 10)
+      throw std::runtime_error(
+          "Parameter of Schaffer 1 has to be bigger or equal than 10.");
+  }
+
+  void evaluate(const generic::range<real> auto& x,
+                generic::range<real> auto&& y) {
+    using namespace std;
+    assert(ranges::size(x) == parameter_count());
+    assert(ranges::size(y) == objective_count());
+
+    const auto square = [](auto x) { return x * x; };
+    y[0] = square(x[0]);
+    y[1] = square(x[0] - 2);
+  }
+
+  real a;
+};
+
+template <std::floating_point real>
+using schaffer1 = schaffer1_problem<real>;
+
+}  // namespace lyrahgames::pareto::gallery

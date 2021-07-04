@@ -47,3 +47,18 @@ obj{fonseca-fleming-nsga2-optimization}: cxx{pareto_two_objective_optimization} 
   cxx.poptions += '-DPROBLEM=pareto::gallery::fonseca_fleming<real>{10}'
   cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
 }
+
+# Schaffer 1
+./: exe{schaffer1-naive-optimization}: obj{schaffer1-naive-optimization}
+obj{schaffer1-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer1<real>{10000}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 100000)'
+}
+
+./: exe{schaffer1-nsga2-optimization}: obj{schaffer1-nsga2-optimization}
+obj{schaffer1-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer1<real>{10000}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
