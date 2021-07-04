@@ -10,7 +10,7 @@
 namespace lyrahgames::pareto::gallery {
 
 template <std::floating_point T>
-struct schaffer1_problem {
+struct schaffer_1_problem {
   using real = T;
 
   static constexpr size_t parameter_count() { return 1; }
@@ -19,8 +19,8 @@ struct schaffer1_problem {
   real box_min(size_t index) const { return -a; }
   real box_max(size_t index) const { return a; }
 
-  schaffer1_problem() = default;
-  schaffer1_problem(real aa) : a{aa} {
+  schaffer_1_problem() = default;
+  schaffer_1_problem(real aa) : a{aa} {
     if (a < 10)
       throw std::runtime_error(
           "Parameter of Schaffer 1 has to be bigger or equal than 10.");
@@ -41,10 +41,10 @@ struct schaffer1_problem {
 };
 
 template <std::floating_point real>
-using schaffer1 = schaffer1_problem<real>;
+using schaffer1 = schaffer_1_problem<real>;
 
 template <std::floating_point T>
-struct schaffer2_problem {
+struct schaffer_2_problem {
   using real = T;
 
   static constexpr size_t parameter_count() { return 1; }
@@ -69,6 +69,6 @@ struct schaffer2_problem {
 };
 
 template <std::floating_point real>
-schaffer2_problem<real> schaffer2;
+schaffer_2_problem<real> schaffer2;
 
 }  // namespace lyrahgames::pareto::gallery

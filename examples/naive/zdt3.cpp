@@ -8,7 +8,7 @@
 #include <lyrahgames/pareto/frontier.hpp>
 #include <lyrahgames/pareto/naive.hpp>
 //
-#include <lyrahgames/pareto/gallery/zdt3.hpp>
+#include <lyrahgames/pareto/gallery/zitzler_deb_thiele.hpp>
 
 using namespace std;
 using namespace lyrahgames;

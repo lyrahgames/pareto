@@ -77,3 +77,18 @@ obj{schaffer2-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
   cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer2<real>'
   cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
 }
+
+# Poloni
+./: exe{poloni-naive-optimization}: obj{poloni-naive-optimization}
+obj{poloni-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::poloni<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000)'
+}
+
+./: exe{poloni-nsga2-optimization}: obj{poloni-nsga2-optimization}
+obj{poloni-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::poloni<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}

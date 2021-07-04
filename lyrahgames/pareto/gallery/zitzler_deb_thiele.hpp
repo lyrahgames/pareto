@@ -9,7 +9,7 @@
 namespace lyrahgames::pareto::gallery {
 
 template <std::floating_point T>
-struct zdt3_problem {
+struct zitzler_deb_thiele_3_problem {
   using real = T;
 
   static constexpr size_t parameter_count() { return 30; }
@@ -38,6 +38,6 @@ struct zdt3_problem {
 };
 
 template <std::floating_point real>
-zdt3_problem<real> zdt3{};
+zitzler_deb_thiele_3_problem<real> zdt3{};
 
 }  // namespace lyrahgames::pareto::gallery
