@@ -43,4 +43,32 @@ struct schaffer1_problem {
 template <std::floating_point real>
 using schaffer1 = schaffer1_problem<real>;
 
+template <std::floating_point T>
+struct schaffer2_problem {
+  using real = T;
+
+  static constexpr size_t parameter_count() { return 1; }
+  static constexpr size_t objective_count() { return 2; }
+
+  static constexpr real box_min(size_t index) { return -5; }
+  static constexpr real box_max(size_t index) { return 10; }
+
+  void evaluate(const generic::range<real> auto& x,
+                generic::range<real> auto&& y) {
+    using namespace std;
+    assert(ranges::size(x) == parameter_count());
+    assert(ranges::size(y) == objective_count());
+
+    const auto square = [](auto x) { return x * x; };
+    y[0] = (x[0] <= 1)
+               ? (-x[0])
+               : ((x[0] <= 3) ? (x[0] - 2)
+                              : ((x[0] <= 4) ? (4 - x[0]) : (x[0] - 4)));
+    y[1] = square(x[0] - 5);
+  }
+};
+
+template <std::floating_point real>
+schaffer2_problem<real> schaffer2;
+
 }  // namespace lyrahgames::pareto::gallery

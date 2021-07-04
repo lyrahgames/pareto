@@ -62,3 +62,18 @@ obj{schaffer1-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
   cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer1<real>{10000}'
   cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
 }
+
+# Schaffer 2
+./: exe{schaffer2-naive-optimization}: obj{schaffer2-naive-optimization}
+obj{schaffer2-naive-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000)'
+}
+
+./: exe{schaffer2-nsga2-optimization}: obj{schaffer2-nsga2-optimization}
+obj{schaffer2-nsga2-optimization}: cxx{pareto_two_objective_optimization} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+}
