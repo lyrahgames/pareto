@@ -9,3 +9,6 @@
 // Frontiers
 #include <lyrahgames/pareto/frontier.hpp>
 #include <lyrahgames/pareto/frontier_cast.hpp>
+
+// Tools
+#include <lyrahgames/pareto/line_cut.hpp>
