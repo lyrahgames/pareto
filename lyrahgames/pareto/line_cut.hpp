@@ -87,8 +87,8 @@ class line_cut {
       // if (distances[i] / distances[i + 1] > 0.8) continue;
       if (distances[i] / distances[i + 1] > 0.8) continue;
       max_allowed_distance = distances[i];
-      std::cout << "index = " << i << '\n'
-                << "max allowed dist = " << max_allowed_distance << '\n';
+      // std::cout << "index = " << i << '\n'
+      //           << "max allowed dist = " << max_allowed_distance << '\n';
       break;
     }
 
