@@ -1,0 +1,171 @@
+exe{*}: test = true
+
+# Kursawe
+./: exe{kursawe-naive}: obj{kursawe-naive}
+obj{kursawe-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::kursawe<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="Kursawe Naive"'
+}
+
+./: exe{kursawe-nsga2}: obj{kursawe-nsga2}
+obj{kursawe-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::kursawe<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="Kursawe NSGA2"'
+}
+
+# ZDT1
+./: exe{zdt1-naive}: obj{zdt1-naive}
+obj{zdt1-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt1<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT1 Naive"'
+}
+
+./: exe{zdt1-nsga2}: obj{zdt1-nsga2}
+obj{zdt1-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt1<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT1 NSGA2"'
+}
+
+# ZDT2
+./: exe{zdt2-naive}: obj{zdt2-naive}
+obj{zdt2-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT2 Naive"'
+}
+
+./: exe{zdt2-nsga2}: obj{zdt2-nsga2}
+obj{zdt2-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT2 NSGA2"'
+}
+
+# ZDT3
+./: exe{zdt3-naive}: obj{zdt3-naive}
+obj{zdt3-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt3<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT3 Naive"'
+}
+
+./: exe{zdt3-nsga2}: obj{zdt3-nsga2}
+obj{zdt3-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt3<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT3 NSGA2"'
+}
+
+# ZDT4
+./: exe{zdt4-naive}: obj{zdt4-naive}
+obj{zdt4-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt4<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT4 Naive"'
+}
+
+./: exe{zdt4-nsga2}: obj{zdt4-nsga2}
+obj{zdt4-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt4<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT4 NSGA2"'
+}
+
+# ZDT6
+./: exe{zdt6-naive}: obj{zdt6-naive}
+obj{zdt6-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt6<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT6 Naive"'
+}
+
+./: exe{zdt6-nsga2}: obj{zdt6-nsga2}
+obj{zdt6-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::zdt6<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="ZDT6 NSGA2"'
+}
+
+# Fonseca-Fleming
+./: exe{fonseca-fleming-naive}: obj{fonseca-fleming-naive}
+obj{fonseca-fleming-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::fonseca_fleming<real>{10}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000000)'
+  cxx.poptions += '-DPLOT_TITLE="Fonseca-Fleming Naive"'
+}
+
+./: exe{fonseca-fleming-nsga2}: obj{fonseca-fleming-nsga2}
+obj{fonseca-fleming-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::fonseca_fleming<real>{10}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="Fonseca-Fleming NSGA2"'
+}
+
+# Schaffer 1
+./: exe{schaffer1-naive}: obj{schaffer1-naive}
+obj{schaffer1-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer1<real>{10000}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 100000)'
+  cxx.poptions += '-DPLOT_TITLE="Schaffer1 Naive"'
+}
+
+./: exe{schaffer1-nsga2}: obj{schaffer1-nsga2}
+obj{schaffer1-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer1<real>{10000}'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="Schaffer1 NSGA2"'
+}
+
+# Schaffer 2
+./: exe{schaffer2-naive}: obj{schaffer2-naive}
+obj{schaffer2-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000)'
+  cxx.poptions += '-DPLOT_TITLE="Schaffer2 Naive"'
+}
+
+./: exe{schaffer2-nsga2}: obj{schaffer2-nsga2}
+obj{schaffer2-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::schaffer2<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="Schaffer2 NSGA2"'
+}
+
+# Poloni
+./: exe{poloni-naive}: obj{poloni-naive}
+obj{poloni-naive}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::poloni<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::naive::optimization<pareto::frontier<real>>(problem, rng, 10000)'
+  cxx.poptions += '-DPLOT_TITLE="Poloni Naive"'
+}
+
+./: exe{poloni-nsga2}: obj{poloni-nsga2}
+obj{poloni-nsga2}: cxx{main} $libs
+{
+  cxx.poptions += '-DPROBLEM=pareto::gallery::poloni<real>'
+  cxx.poptions += '-DOPTIMIZATION=pareto::nsga2::optimization<pareto::frontier<real>>(problem, rng)'
+  cxx.poptions += '-DPLOT_TITLE="Poloni NSGA2"'
+}

@@ -5,6 +5,7 @@
 #include <concepts>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <ranges>
 #include <vector>
 //
@@ -34,56 +35,63 @@ class line_cut {
              *frontier.objectives_iterator(j);
     });
 
+    auto it = frontier.objectives_iterator(indices.front());
+    const real left = *it++;
+    const real top = *it;
+    it = frontier.objectives_iterator(indices.back());
+    const real right = *it++;
+    const real bottom = *it;
+
+    constexpr auto infinity = std::numeric_limits<real>::infinity();
+    const auto xscale = 1 / (right - left);
+    const auto yscale = 1 / (top - bottom);
+    vector<real> distances(n - 1);
+
+    const auto square = [](real x) { return x * x; };
+
+    const auto distance = [&](size_t i) {
+      auto it = frontier.objectives_iterator(indices[i]);
+      const real x1 = *it++;
+      const real y1 = *it;
+      it = frontier.objectives_iterator(indices[i + 1]);
+      const real x2 = *it++;
+      const real y2 = *it;
+      return sqrt(square(xscale * (x2 - x1)) + square(yscale * (y2 - y1)));
+    };
+
     // Compute mean distance of neighbors.
     // real mean_distance = 0;
     for (size_t i = 0; i < n - 1; ++i) {
-      auto it = frontier.objectives_iterator(indices[i]);
-      const real x1 = *it++;
-      const real y1 = *it;
-      it = frontier.objectives_iterator(indices[i + 1]);
-      const real x2 = *it++;
-      const real y2 = *it;
-
-      mean_distance += sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+      distances[i] = distance(i);
+      mean_distance += distances[i];
     }
     mean_distance /= n - 1;
 
-    // cout << setw(30) << "mean distance = " << mean_distance << '\n';
-
     // Compute the variance and standard deviation of distance of neighbors.
     // real var_distance = 0;
-    for (size_t i = 0; i < n - 1; ++i) {
-      auto it = frontier.objectives_iterator(indices[i]);
-      const real x1 = *it++;
-      const real y1 = *it;
-      it = frontier.objectives_iterator(indices[i + 1]);
-      const real x2 = *it++;
-      const real y2 = *it;
-
-      const auto distance = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-      var_distance += (distance - mean_distance) * (distance - mean_distance);
-    }
+    for (size_t i = 0; i < n - 1; ++i)
+      var_distance += square(distances[i] - mean_distance);
     var_distance /= n - 2;
     stddev_distance = sqrt(var_distance);
 
-    // cout << setw(30) << "distance variance = " << var_distance << '\n'
-    //      << setw(30) << "distance stddev = " << stddev_distance << '\n';
+    // Estimate maximum allowed distance.
+    ranges::sort(distances);
+    auto max_allowed_distance = infinity;
+    for (size_t i = 0; i < distances.size() - 1; ++i) {
+      if (distances[i] < mean_distance) continue;
+      if (distances[i] / distances[i + 1] > 0.8) continue;
+      max_allowed_distance = distances[i];
+      std::cout << "index = " << i << '\n'
+                << "max allowed dist = " << max_allowed_distance << '\n';
+      break;
+    }
 
+    // Cut Pareto frontier into line segments.
     size_t line_start = 0;
     for (size_t i = 0; i < n - 1; ++i) {
-      auto it = frontier.objectives_iterator(indices[i]);
-      const real x1 = *it++;
-      const real y1 = *it;
-      it = frontier.objectives_iterator(indices[i + 1]);
-      const real x2 = *it++;
-      const real y2 = *it;
-
-      const auto distance = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-      if (distance > mean_distance + 3 * stddev_distance) {
+      if (distance(i) > max_allowed_distance) {
         edges.push_back({line_start, i + 1});
         line_start = i + 1;
-        // cout << "Cut connection (" << i << ", " << i + 1 << ").\n";
-        // output << '\n';
       }
     }
     edges.push_back({line_start, n});
