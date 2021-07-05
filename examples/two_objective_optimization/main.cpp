@@ -63,5 +63,5 @@ int main() {
   plot << "set title '" PLOT_TITLE "'\n"
        << "plot '" << file.path().string()
        << "' u 1:2 w p pt 2 ps 0.5 lt rgb '#222222' title 'Point Estimation', "
-          "'' u 1:2 w l lt rgb '#ff3333' title 'Frontier Estimation'\n";
+          "'' u 1:2 w l lw 2 lt rgb '#ff3333' title 'Frontier Estimation'\n";
 }

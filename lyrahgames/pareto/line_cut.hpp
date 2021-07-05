@@ -56,7 +56,12 @@ class line_cut {
       it = frontier.objectives_iterator(indices[i + 1]);
       const real x2 = *it++;
       const real y2 = *it;
-      return sqrt(square(xscale * (x2 - x1)) + square(yscale * (y2 - y1)));
+      const auto dx = xscale * (x2 - x1);
+      const auto dy = yscale * (y1 - y2);
+      const auto ddxdy2 = square(dx - dy);
+      const auto denom = ddxdy2 + dx * dy;
+      const auto slope_penalty = (denom < 1e-6) ? (0) : (ddxdy2 / denom);
+      return sqrt(dx * dx + dy * dy) * (0.9 + 0.8 * slope_penalty);
     };
 
     // Compute mean distance of neighbors.
@@ -79,6 +84,7 @@ class line_cut {
     auto max_allowed_distance = infinity;
     for (size_t i = 0; i < distances.size() - 1; ++i) {
       if (distances[i] < mean_distance) continue;
+      // if (distances[i] / distances[i + 1] > 0.8) continue;
       if (distances[i] / distances[i + 1] > 0.8) continue;
       max_allowed_distance = distances[i];
       std::cout << "index = " << i << '\n'
