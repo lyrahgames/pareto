@@ -15,8 +15,8 @@ email: lyrahgames@mailbox.org
 depends: * build2 >= 0.13.0
 depends: * bpkg >= 0.13.0
 
-depends: lyrahgames-xstd == 0.1.3
-depends: lyrahgames-gnuplot == 0.1.4
+depends: lyrahgames-xstd ^ 0.1.0
+depends: lyrahgames-gnuplot ^ 0.1.0
 
 depends: doctest ^ 2.4.0
 
