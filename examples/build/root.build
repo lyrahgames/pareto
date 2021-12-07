@@ -9,3 +9,5 @@ ixx{*}: extension = ipp
 
 test.target = $cxx.target
 
+import libs = lyrahgames-pareto%lib{lyrahgames-pareto}
+import libs += lyrahgames-gnuplot%lib{lyrahgames-gnuplot}

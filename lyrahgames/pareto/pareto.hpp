@@ -12,3 +12,4 @@
 
 // Tools
 #include <lyrahgames/pareto/line_cut.hpp>
+#include <lyrahgames/pareto/parameter_line_cut.hpp>

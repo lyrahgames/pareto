@@ -23,17 +23,19 @@ int main() {
   // output format in one step.
   const auto problem = PROBLEM;
   const auto pareto_front = OPTIMIZATION;
-  const auto line_cut = pareto::line_cut(pareto_front);
+  // const auto line_cut = pareto::line_cut(pareto_front);
+  const auto line_cut = pareto::parameter_line_cut(pareto_front);
 
   const auto end = clock::now();
   const auto time = chrono::duration<double>(end - start).count();
-  cout << setw(20) << "time = " << setw(20) << time << " s\n"
-       << setw(20) << "mean distance = " << setw(20)
-       << line_cut.mean_neighbor_distance() << '\n'
-       << setw(20) << "var distance = " << setw(20)
-       << line_cut.var_neighbor_distance() << '\n'
-       << setw(20) << "stddev distance = " << setw(20)
-       << line_cut.stddev_neighbor_distance() << '\n'
+  cout << setw(20) << "time = " << setw(20) << time
+       << " s\n"
+       // << setw(20) << "mean distance = " << setw(20)
+       // << line_cut.mean_neighbor_distance() << '\n'
+       // << setw(20) << "var distance = " << setw(20)
+       // << line_cut.var_neighbor_distance() << '\n'
+       // << setw(20) << "stddev distance = " << setw(20)
+       // << line_cut.stddev_neighbor_distance() << '\n'
        << setw(20) << "line count = " << setw(20) << line_cut.lines().size()
        << '\n';
   ;
@@ -61,7 +63,7 @@ int main() {
   // Plot the data.
   gnuplot::pipe plot{};
   plot << "set title '" PLOT_TITLE "'\n"
-       << "plot '" << file.path().string()
-       << "' u 1:2 w p pt 2 ps 0.5 lt rgb '#222222' title 'Point Estimation', "
-          "'' u 1:2 w l lw 2 lt rgb '#ff3333' title 'Frontier Estimation'\n";
+       << "plot '" << file.path().string() <<
+      // "' u 1:2 w p pt 2 ps 0.5 lt rgb '#222222' title 'Point Estimation', "
+      "' u 1:2 w l lw 2 lt rgb '#ff3333' title 'Frontier Estimation'\n";
 }
